@@ -1,4 +1,4 @@
-# bsp.nvim
+# dotnet-bsp
 Build Server for .NET C#. BSP is designed to allow your editor to communicate with different build tools to compile, run, test, debug your code and more. For more info see the [Official BSP specification](https://build-server-protocol.github.io/docs/specification).
 
 This is currently in active development and is not stable. You are welcome to contibute and make PRs.
