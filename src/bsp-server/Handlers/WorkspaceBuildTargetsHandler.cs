@@ -44,7 +44,7 @@ internal class WorkspaceBuildTargetsHandler
         var projectFiles = new List<string>();
         if (!string.IsNullOrWhiteSpace(slnFilePath))
         {
-            logger.LogInformation("Found Solution File: {}", slnFilePath);
+            logger.LogInformation("Found solution file: {}", slnFilePath);
             var buildTarget = new BuildTarget
             {
                 Id = new BuildTargetIdentifier
@@ -76,7 +76,7 @@ internal class WorkspaceBuildTargetsHandler
             projectFiles.AddRange(Directory.GetFiles(workspacePath, "*.csproj"));
         }
 
-        logger.LogInformation("Project Files found: {}",
+        logger.LogInformation("Found project files: {}",
             string.Join(Environment.NewLine, projectFiles));
         var projectCollection = new ProjectCollection();
         var projects = projectFiles
