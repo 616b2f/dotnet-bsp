@@ -9,8 +9,9 @@ if [ ! -d "$1" ]; then
     echo "directory $1 does not exist."
     exit 1
 fi
-
-BSP_SERVER=$PWD/bin/dotnet-bsp.dll
+script_path=$(readlink -f "${BASH_SOURCE[0]}")
+dir=$(dirname "${script_path}")
+BSP_SERVER=$dir/bin/dotnet-bsp.dll
 mkdir -p "$1/.bsp"
 cat > "$1.bsp/dotnet-bsp.json" << EOF
 {
