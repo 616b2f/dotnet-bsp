@@ -34,8 +34,8 @@ namespace dotnet_bsp.Handlers
             // {
             //     Range = new bsp4csharp.Protocol.Range
             //     {
-            //         Start = new Position { Line = e.LineNumber, Character = e.ColumnNumber },
-            //         End = new Position { Line = e.EndLineNumber, Character = e.EndColumnNumber }
+            //      Start = new Position { Line = e.LineNumber - 1 , Character = e.ColumnNumber - 1 },
+            //      End = new Position { Line = e.EndLineNumber - 1, Character = e.EndColumnNumber - 1}
             //     },
             //     Message = e.Message ?? "No message",
             //     Code = e.Code,
@@ -57,8 +57,8 @@ namespace dotnet_bsp.Handlers
             {
                 Range = new bsp4csharp.Protocol.Range
                 {
-                    Start = new Position { Line = e.LineNumber, Character = e.ColumnNumber },
-                    End = new Position { Line = e.EndLineNumber, Character = e.EndColumnNumber }
+                    Start = new Position { Line = e.LineNumber - 1 , Character = e.ColumnNumber - 1 },
+                    End = new Position { Line = e.EndLineNumber - 1, Character = e.EndColumnNumber - 1}
                 },
                 Message = e.Message ?? "No message",
                 Code = e.Code,
@@ -80,8 +80,8 @@ namespace dotnet_bsp.Handlers
             {
                 Range = new bsp4csharp.Protocol.Range
                 {
-                    Start = new Position { Line = e.LineNumber, Character = e.ColumnNumber },
-                    End = new Position { Line = e.EndLineNumber, Character = e.EndColumnNumber }
+                    Start = new Position { Line = e.LineNumber - 1 , Character = e.ColumnNumber - 1 },
+                    End = new Position { Line = e.EndLineNumber - 1, Character = e.EndColumnNumber - 1}
                 },
                 Message = e.Message ?? "No message",
                 Code = e.Code,
