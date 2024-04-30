@@ -48,7 +48,7 @@ internal class BuildTargetCleanCacheHandler
 
                     foreach (var projectFile in projectFilesInSln)
                     {
-                        projects.LoadProject(target.Uri.ToString());
+                        projects.LoadProject(projectFile);
                     }
                 }
                 else if (fileExtension == ".csproj")
