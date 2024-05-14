@@ -2,6 +2,7 @@ using BaseProtocol;
 using bsp4csharp.Protocol;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
+using dotnet_bsp.Logging;
 
 namespace dotnet_bsp.Handlers;
 
