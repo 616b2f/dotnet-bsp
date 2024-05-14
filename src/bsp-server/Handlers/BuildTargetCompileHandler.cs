@@ -2,7 +2,6 @@ using BaseProtocol;
 using bsp4csharp.Protocol;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
-using Microsoft.CodeAnalysis.MSBuild;
 
 namespace dotnet_bsp.Handlers;
 
@@ -27,46 +26,56 @@ internal class BuildTargetCompileHandler
     {
         var projects = new ProjectCollection();
         var buildResult = false;
-        using (var workspace = MSBuildWorkspace.Create())
+        foreach (var target in compileParams.Targets)
         {
-            foreach (var target in compileParams.Targets)
+            var fileExtension = Path.GetExtension(target.Uri.ToString());
+            context.Logger.LogInformation("Target file extension {}", fileExtension);
+            if (fileExtension == ".sln")
             {
-                var fileExtension = Path.GetExtension(target.Uri.ToString());
-                context.Logger.LogInformation("Target file extension {}", fileExtension);
-                if (fileExtension == ".sln")
+                var slnFile = SolutionFile.Parse(target.Uri.ToString());
+
+                var configurationName = slnFile.GetDefaultConfigurationName();
+                var platformName = slnFile.GetDefaultPlatformName();
+                if (string.Equals(platformName, "Any CPU", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    var slnFile = SolutionFile.Parse(target.Uri.ToString());
-                    var sln = workspace.OpenSolutionAsync(target.Uri.ToString()).GetAwaiter().GetResult();
-                    var projectIds = sln.GetProjectDependencyGraph().GetTopologicallySortedProjects();
-
-                    var projectFilesInSln = slnFile.ProjectsInOrder
-                        .Where(x => 
-                            x.ProjectType == SolutionProjectType.KnownToBeMSBuildFormat ||
-                            x.ProjectType == SolutionProjectType.WebProject)
-                        .Select(x => x.AbsolutePath);
-
-                    foreach (var projectFile in projectFilesInSln)
-                    {
-                        projects.LoadProject(projectFile);
-                    }
+                    platformName = "AnyCpu";
                 }
-                else if (fileExtension == ".csproj")
+
+                context.Logger.LogInformation("use platformName: {}", platformName);
+                context.Logger.LogInformation("use configurationName: {}", configurationName);
+                var projectFilesInSln = slnFile.ProjectsInOrder
+                    .Where(x => 
+                        (x.ProjectType == SolutionProjectType.KnownToBeMSBuildFormat ||
+                        x.ProjectType == SolutionProjectType.WebProject) &&
+                        // and only projects that has the build flag enabled for the provided configuration
+                        x.ProjectConfigurations.Values.Any(v =>
+                            v.ConfigurationName.Equals(configurationName, StringComparison.InvariantCultureIgnoreCase) &&
+                            v.PlatformName.Equals(platformName, StringComparison.InvariantCultureIgnoreCase) &&
+                            v.IncludeInBuild)
+                        )
+                    .Select(x => x.AbsolutePath);
+
+                foreach (var projectFile in projectFilesInSln)
                 {
-                    projects.LoadProject(target.Uri.ToString());
+                    projects.LoadProject(projectFile);
                 }
             }
-
-            var initParams = _capabilitiesManager.GetInitializeParams();
-            if (initParams.RootUri.IsFile)
+            else if (fileExtension == ".csproj")
             {
-                var workspacePath = initParams.RootUri.AbsolutePath;
-                context.Logger.LogInformation("GetLoadedProjects from {}", workspacePath);
-                foreach (var proj in projects.LoadedProjects)
-                {
-                    context.Logger.LogInformation("Start building target: {}", proj.ProjectFileLocation);
-                    var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager);
-                    buildResult = proj.Build(msBuildLogger);
-                }
+                projects.LoadProject(target.Uri.ToString());
+            }
+        }
+
+        var initParams = _capabilitiesManager.GetInitializeParams();
+        if (initParams.RootUri.IsFile)
+        {
+            var workspacePath = initParams.RootUri.AbsolutePath;
+            context.Logger.LogInformation("GetLoadedProjects from {}", workspacePath);
+            foreach (var proj in projects.LoadedProjects)
+            {
+                context.Logger.LogInformation("Start building target: {}", proj.ProjectFileLocation);
+                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager);
+                buildResult = proj.Build(msBuildLogger);
             }
         }
 
