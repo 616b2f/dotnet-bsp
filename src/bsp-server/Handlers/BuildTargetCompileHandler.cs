@@ -76,7 +76,8 @@ internal class BuildTargetCompileHandler
             {
                 context.Logger.LogInformation("Start building target: {}", proj.ProjectFileLocation);
                 var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager);
-                buildResult = proj.Build(msBuildLogger);
+                buildResult = proj.Build("Restore", new [] {msBuildLogger});
+                buildResult &= proj.Build("Build", new [] {msBuildLogger});
             }
         }
 
