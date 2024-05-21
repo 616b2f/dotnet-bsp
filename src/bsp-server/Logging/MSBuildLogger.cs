@@ -8,11 +8,13 @@ namespace dotnet_bsp.Logging
     internal class MSBuildLogger : ILogger
     {
         private readonly IBaseProtocolClientManager _baseProtocolClientManager;
+        private readonly string _workspacePath;
         private readonly ICollection<string> _diagnosticKeysCollection = [];
 
-        public MSBuildLogger(BaseProtocol.IBaseProtocolClientManager baseProtocolClientManager)
+        public MSBuildLogger(BaseProtocol.IBaseProtocolClientManager baseProtocolClientManager, string workspacePath)
         {
             _baseProtocolClientManager = baseProtocolClientManager;
+            _workspacePath = workspacePath;
             Parameters = string.Empty;
         }
 
@@ -72,8 +74,8 @@ namespace dotnet_bsp.Logging
             {
                 var taskStartParams = new TaskStartParams
                 {
-                    TaskId = new TaskId { Id = e.ProjectFile! },
-                    Message = e.SenderName ?? "[MSBUILD]" + ": " + e.Message + "; " + e.ParentProjectBuildEventContext?.GetHashCode().ToString(),
+                    TaskId = new TaskId { Id = e.ProjectFile!, Parents = [e.BuildEventContext!.BuildRequestId.ToString()] },
+                    Message = "[" + e.SenderName ?? "MSBUILD" + "]: " + e.Message + "; " + e.ParentProjectBuildEventContext?.GetHashCode().ToString(),
                     EventTime = e.Timestamp.Millisecond
                 };
                 var _ = _baseProtocolClientManager.SendNotificationAsync(
@@ -88,8 +90,8 @@ namespace dotnet_bsp.Logging
             {
                 var taskFinishParams = new TaskFinishParams
                 {
-                    TaskId = new TaskId { Id = e.ProjectFile! },
-                    Message = e.SenderName ?? "[MSBUILD]" + ": " + e.Message + "; " + e.BuildEventContext?.GetHashCode().ToString(),
+                    TaskId = new TaskId { Id = e.ProjectFile!, Parents = [e.BuildEventContext!.BuildRequestId.ToString()] },
+                    Message = "[" + e.SenderName ?? "MSBUILD" + "]: " + e.Message + "; " + e.BuildEventContext?.GetHashCode().ToString(),
                     EventTime = e.Timestamp.Millisecond,
                     Status = e.Succeeded ? StatusCode.Ok : StatusCode.Error,
                 };
@@ -100,27 +102,26 @@ namespace dotnet_bsp.Logging
 
         private void TaskStartedRaised(object sender, TaskStartedEventArgs e)
         {
-            var taskStartParams = new TaskStartParams
+            var projectFile = e.ProjectFile.StartsWith(_workspacePath) ? e.ProjectFile.Substring(_workspacePath.Length + 1) : e.ProjectFile;
+            var taskProgressParams = new TaskProgressParams
             {
-                TaskId = new TaskId { Id = e.ProjectFile + ":" + e.TaskName + ":" + e.ThreadId },
-                Message = e.ProjectFile + ":" + e.TaskName + ":" + e.Message,
-                EventTime = e.Timestamp.Millisecond
+                TaskId = new TaskId { Id = e.ProjectFile },
+                Message = "[" + e.TaskName + "][" + projectFile + "]:" + e.Message ?? "",
             };
-            var _ = _baseProtocolClientManager.SendNotificationAsync(
-                Methods.BuildTaskStart, taskStartParams, CancellationToken.None);
+            _ = _baseProtocolClientManager.SendNotificationAsync(
+                Methods.BuildTaskProgress, taskProgressParams, CancellationToken.None);
         }
 
         private void TaskFinishedRaised(object sender, TaskFinishedEventArgs e)
         {
-            var taskFinishParams = new TaskFinishParams
+            var projectFile = e.ProjectFile.StartsWith(_workspacePath) ? e.ProjectFile.Substring(_workspacePath.Length + 1) : e.ProjectFile;
+            var taskProgressParams = new TaskProgressParams
             {
-                TaskId = new TaskId { Id = e.ProjectFile + ":" + e.TaskName },
-                Message = e.ProjectFile + ":" + e.TaskName + ":" + e.Message,
-                EventTime = e.Timestamp.Millisecond,
-                Status = e.Succeeded ? StatusCode.Ok : StatusCode.Error,
+                TaskId = new TaskId { Id = e.ProjectFile },
+                Message = "[" + e.TaskName + "][" + projectFile + "]:" + e.Message ?? "",
             };
-            var _ = _baseProtocolClientManager.SendNotificationAsync(
-                Methods.BuildTaskFinish, taskFinishParams, CancellationToken.None);
+            _ = _baseProtocolClientManager.SendNotificationAsync(
+                Methods.BuildTaskProgress, taskProgressParams, CancellationToken.None);
         }
 
         private void MessageRaised(object sender, BuildMessageEventArgs e)
@@ -138,6 +139,14 @@ namespace dotnet_bsp.Logging
                 };
                 var _ = _baseProtocolClientManager.SendNotificationAsync(
                     Methods.BuildLogMessage, logMessgeParams, CancellationToken.None);
+
+                var taskProgressParams = new TaskProgressParams
+                {
+                    TaskId = new TaskId { Id = e.ThreadId.ToString() },
+                    Message = "[" + e.SenderName + "][" + e.Importance.ToString() + "]: " + e.Message ?? "",
+                };
+                _ = _baseProtocolClientManager.SendNotificationAsync(
+                    Methods.BuildTaskProgress, taskProgressParams, CancellationToken.None);
             }
         }
 

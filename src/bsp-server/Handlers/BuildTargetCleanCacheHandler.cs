@@ -57,7 +57,7 @@ internal class BuildTargetCleanCacheHandler
         {
             var workspacePath = initParams.RootUri.AbsolutePath;
             context.Logger.LogInformation("GetLoadedProjects from {}", workspacePath);
-            var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager);
+            var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, workspacePath);
             foreach (var proj in projects.LoadedProjects)
             {
                 context.Logger.LogInformation("Start clean for target: {}", proj.ProjectFileLocation);
@@ -74,4 +74,3 @@ internal class BuildTargetCleanCacheHandler
         });
     }
 }
-

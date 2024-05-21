@@ -75,7 +75,7 @@ internal class BuildTargetCompileHandler
             foreach (var proj in projects.LoadedProjects)
             {
                 context.Logger.LogInformation("Start building target: {}", proj.ProjectFileLocation);
-                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager);
+                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, workspacePath);
                 buildResult = proj.Build("Restore", new [] {msBuildLogger});
                 buildResult &= proj.Build("Build", new [] {msBuildLogger});
             }
@@ -87,4 +87,3 @@ internal class BuildTargetCompileHandler
         });
     }
 }
-
