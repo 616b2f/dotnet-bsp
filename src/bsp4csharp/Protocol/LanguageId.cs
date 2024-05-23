@@ -1,7 +1,6 @@
-namespace bsp4csharp.Protocol
+namespace bsp4csharp.Protocol;
+
+public static class LanguageId
 {
-    public static class LanguageId
-    {
-        public const string Csharp = "csharp";
-    }
+    public const string Csharp = "csharp";
 }

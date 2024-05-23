@@ -1,9 +1,8 @@
 using System.Runtime.Serialization;
 
-namespace bsp4csharp.Protocol
+namespace bsp4csharp.Protocol;
+
+[DataContract]
+public class SourcesParams
 {
-    [DataContract]
-    public class SourcesParams
-    {
-    }
 }

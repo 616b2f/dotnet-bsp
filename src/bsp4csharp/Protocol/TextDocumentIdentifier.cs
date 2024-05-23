@@ -1,13 +1,10 @@
 using System.Runtime.Serialization;
 
-namespace bsp4csharp.Protocol
+namespace bsp4csharp.Protocol;
+
+[DataContract]
+public record TextDocumentIdentifier
 {
-    [DataContract]
-    public record TextDocumentIdentifier
-    {
-        [DataMember(Name="uri")]
-        public required Uri Uri { get; set; }
-    }
-
+    [DataMember(Name="uri")]
+    public required Uri Uri { get; set; }
 }
-
