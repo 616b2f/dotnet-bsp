@@ -16,6 +16,8 @@ namespace dotnet_bsp.Logging
             _baseProtocolClientManager = baseProtocolClientManager;
             _workspacePath = workspacePath;
             Parameters = string.Empty;
+
+            CleanDiagnostics();
         }
 
         public LoggerVerbosity Verbosity { get; set; } = LoggerVerbosity.Normal;
@@ -23,8 +25,6 @@ namespace dotnet_bsp.Logging
 
         public void Initialize(IEventSource eventSource)
         {
-            CleanDiagnostics();
-
             eventSource.BuildStarted += BuildStarted;
             eventSource.BuildFinished += BuildFinished;
             eventSource.ProjectStarted += ProjectStarted;
