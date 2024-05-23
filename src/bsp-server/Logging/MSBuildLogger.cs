@@ -23,6 +23,8 @@ namespace dotnet_bsp.Logging
 
         public void Initialize(IEventSource eventSource)
         {
+            CleanDiagnostics();
+
             eventSource.BuildStarted += BuildStarted;
             eventSource.BuildFinished += BuildFinished;
             eventSource.ProjectStarted += ProjectStarted;
@@ -34,6 +36,19 @@ namespace dotnet_bsp.Logging
             eventSource.MessageRaised += MessageRaised;
             eventSource.WarningRaised += WarningRaised;
             eventSource.ErrorRaised += ErrorRaised;
+        }
+
+        private void CleanDiagnostics()
+        {
+            var diagParams = new PublishDiagnosticsParams
+            {
+                TextDocument = new TextDocumentIdentifier { Uri = UriWithSchema("/") },
+                BuildTarget = new BuildTargetIdentifier { Uri = UriWithSchema("/") },
+                Reset = true
+            };
+
+            var _ = _baseProtocolClientManager.SendNotificationAsync(
+                Methods.BuildPublishDiagnostics, diagParams, CancellationToken.None);
         }
 
         private void BuildStarted(object sender, BuildStartedEventArgs e)
