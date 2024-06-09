@@ -72,6 +72,7 @@ public class BuildServer : AbstractBaseProtocolServer<RequestContext>
             .AddSingleton<IMethodHandler, BuildInitializedHandler>()
             .AddSingleton<IMethodHandler, BuildTargetSourcesHandler>()
             .AddSingleton<IMethodHandler, BuildTargetCompileHandler>()
+            .AddSingleton<IMethodHandler, BuildTargetTestHandler>()
             .AddSingleton<IMethodHandler, BuildTargetCleanCacheHandler>()
             .AddSingleton<IMethodHandler, WorkspaceBuildTargetsHandler>();
 

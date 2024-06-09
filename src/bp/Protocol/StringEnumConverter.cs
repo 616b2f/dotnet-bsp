@@ -73,7 +73,7 @@ namespace BaseProtocol.Protocol
         : System.ComponentModel.TypeConverter
     {
         /// <inheritdoc/>
-        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+        public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
         {
             if (sourceType == typeof(string))
             {
@@ -84,7 +84,7 @@ namespace BaseProtocol.Protocol
         }
 
         /// <inheritdoc/>
-        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+        public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
         {
             if (value is string stringValue)
             {
@@ -96,5 +96,4 @@ namespace BaseProtocol.Protocol
     }
 }
 }
-
 

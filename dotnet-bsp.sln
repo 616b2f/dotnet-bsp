@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bsp4csharp", "src\bsp4cshar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotnet-bsp", "src\bsp-server\dotnet-bsp.csproj", "{A88E3B50-D12B-4925-9522-E57878D2AB54}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bsp-server.tests", "test\bsp-server.tests.csproj", "{4EE3A425-382F-42ED-934E-6A9676533962}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{A88E3B50-D12B-4925-9522-E57878D2AB54}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A88E3B50-D12B-4925-9522-E57878D2AB54}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A88E3B50-D12B-4925-9522-E57878D2AB54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EE3A425-382F-42ED-934E-6A9676533962}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EE3A425-382F-42ED-934E-6A9676533962}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EE3A425-382F-42ED-934E-6A9676533962}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EE3A425-382F-42ED-934E-6A9676533962}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{4C290E5D-5CAD-42D7-B776-E581695D4E4A} = {992A1911-5B82-4DF3-9880-83E07F114A2D}

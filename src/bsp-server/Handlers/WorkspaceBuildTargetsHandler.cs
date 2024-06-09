@@ -2,11 +2,12 @@ using BaseProtocol;
 using bsp4csharp.Protocol;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
+using Newtonsoft.Json;
 
 namespace dotnet_bsp.Handlers;
 
 [BaseProtocolServerEndpoint(Methods.WorkspaceBuildTargets)]
-internal class WorkspaceBuildTargetsHandler
+internal partial class WorkspaceBuildTargetsHandler
     : IRequestHandler<WorkspaceBuildTargetsResult, RequestContext>
 {
     private readonly IInitializeManager<InitializeBuildParams, InitializeBuildResult> _capabilitiesManager;
@@ -88,7 +89,47 @@ internal class WorkspaceBuildTargetsHandler
                 }))
             .ToArray();
         list.AddRange(ProjectsToBuildTargets(projects));
+        var projectRootPaths = projects.Select(x => x.DirectoryPath);
+        list.AddRange(GetLaunchSettingsProfilesAsBuildTargets(projectRootPaths, logger));
 
+        return list;
+    }
+
+    private IEnumerable<BuildTarget> GetLaunchSettingsProfilesAsBuildTargets(IEnumerable<string> projectRootPaths, IBpLogger logger)
+    {
+        var list = new List<BuildTarget>();
+        foreach(var projectRoothPath in projectRootPaths)
+        {
+            var launchSettingsPath = Path.Combine(projectRoothPath, "Properties", "launchSettings.json");
+            if (File.Exists(launchSettingsPath))
+            {
+                var content = File.ReadAllText(launchSettingsPath);
+                logger.LogInformation("launcSettings.json content: {}", content);
+                var launchSettings = JsonConvert.DeserializeObject<LaunchSettings>(content);
+
+                if (launchSettings is not null)
+                {
+                    logger.LogInformation(JsonConvert.SerializeObject(launchSettings));
+                    foreach(var profile in launchSettings.Profiles)
+                    {
+                        list.Add(new BuildTarget
+                        {
+                            Id = new BuildTargetIdentifier
+                            {
+                                Uri = new System.Uri(Path.Combine(launchSettingsPath, profile.Key), UriKind.Absolute)
+                            },
+                            DisplayName = profile.Key + " [LaunchProfile]",
+                            LanguageIds = new[] { LanguageId.Csharp },
+                            Capabilities = new BuildTargetCapabilities
+                            {
+                                CanRun = true,
+                            },
+                            Tags = [BuildTargetTag.Application]
+                        });
+                    }
+                }
+            }
+        }
         return list;
     }
 

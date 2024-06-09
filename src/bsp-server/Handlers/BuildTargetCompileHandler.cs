@@ -72,12 +72,12 @@ internal class BuildTargetCompileHandler
         {
             var workspacePath = initParams.RootUri.AbsolutePath;
             context.Logger.LogInformation("GetLoadedProjects from {}", workspacePath);
-            var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, workspacePath);
+            _baseProtocolClientManager.SendClearDiagnosticsMessage();
             foreach (var proj in projects.LoadedProjects)
             {
-                context.Logger.LogInformation("Start building target: {}", proj.ProjectFileLocation);
-                buildResult = proj.Build("Restore", new [] {msBuildLogger});
-                buildResult &= proj.Build("Rebuild", new [] {msBuildLogger});
+                context.Logger.LogInformation("Start building target: {}", proj.FullPath);
+                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, workspacePath, proj.FullPath);
+                buildResult |= proj.Build(["Restore", "Rebuild"], new [] {msBuildLogger});
             }
         }
 

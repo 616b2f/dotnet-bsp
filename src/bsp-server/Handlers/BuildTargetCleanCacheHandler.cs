@@ -25,42 +25,42 @@ internal class BuildTargetCleanCacheHandler
 
     public Task<CleanCacheResult> HandleRequestAsync(CleanCacheParams cleanCacheParams, RequestContext context, CancellationToken cancellationToken)
     {
-        var projects = new ProjectCollection();
         var cleanResult = false;
-        foreach (var target in cleanCacheParams.Targets)
-        {
-            var fileExtension = Path.GetExtension(target.Uri.ToString());
-            context.Logger.LogInformation("Target file extension {}", fileExtension);
-            if (fileExtension == ".sln")
-            {
-                var slnFile = SolutionFile.Parse(target.Uri.ToString());
-
-                var projectFilesInSln = slnFile.ProjectsInOrder
-                    .Where(x => 
-                        x.ProjectType == SolutionProjectType.KnownToBeMSBuildFormat ||
-                        x.ProjectType == SolutionProjectType.WebProject)
-                    .Select(x => x.AbsolutePath);
-
-                foreach (var projectFile in projectFilesInSln)
-                {
-                    projects.LoadProject(projectFile);
-                }
-            }
-            else if (fileExtension == ".csproj")
-            {
-                projects.LoadProject(target.Uri.ToString());
-            }
-        }
-
         var initParams = _capabilitiesManager.GetInitializeParams();
         if (initParams.RootUri.IsFile)
         {
+            var projects = new ProjectCollection();
+            foreach (var target in cleanCacheParams.Targets)
+            {
+                var fileExtension = Path.GetExtension(target.Uri.ToString());
+                context.Logger.LogInformation("Target file extension {}", fileExtension);
+                if (fileExtension == ".sln")
+                {
+                    var slnFile = SolutionFile.Parse(target.Uri.ToString());
+
+                    var projectFilesInSln = slnFile.ProjectsInOrder
+                        .Where(x => 
+                            x.ProjectType == SolutionProjectType.KnownToBeMSBuildFormat ||
+                            x.ProjectType == SolutionProjectType.WebProject)
+                        .Select(x => x.AbsolutePath);
+
+                    foreach (var projectFile in projectFilesInSln)
+                    {
+                        projects.LoadProject(projectFile);
+                    }
+                }
+                else if (fileExtension == ".csproj")
+                {
+                    projects.LoadProject(target.Uri.ToString());
+                }
+            }
+
             var workspacePath = initParams.RootUri.AbsolutePath;
             context.Logger.LogInformation("GetLoadedProjects from {}", workspacePath);
-            var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, workspacePath);
             foreach (var proj in projects.LoadedProjects)
             {
-                context.Logger.LogInformation("Start clean for target: {}", proj.ProjectFileLocation);
+                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, workspacePath, proj.FullPath);
+                context.Logger.LogInformation("Start clean for target: {}", proj.FullPath);
                 cleanResult |= proj.Build("Clean", new [] { msBuildLogger });
             }
         }
