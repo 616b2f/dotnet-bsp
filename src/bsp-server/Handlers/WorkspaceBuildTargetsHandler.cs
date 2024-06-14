@@ -11,8 +11,6 @@ internal partial class WorkspaceBuildTargetsHandler
     : IRequestHandler<WorkspaceBuildTargetsResult, RequestContext>
 {
     private readonly IInitializeManager<InitializeBuildParams, InitializeBuildResult> _capabilitiesManager;
-    private readonly string PACKAGE_REFERENCE_TAG = "PackageReference";
-
     public WorkspaceBuildTargetsHandler(IInitializeManager<InitializeBuildParams, InitializeBuildResult> capabilitiesManager)
     {
         _capabilitiesManager = capabilitiesManager;
@@ -53,7 +51,11 @@ internal partial class WorkspaceBuildTargetsHandler
                     Uri = new System.Uri(slnFilePath, UriKind.Relative)
                 },
                 DisplayName = Path.GetFileName(slnFilePath),
-                Capabilities = new BuildTargetCapabilities { CanCompile = true }
+                Capabilities = new BuildTargetCapabilities
+                {
+                    CanCompile = true,
+                    CanTest = true
+                }
             };
             var baseDirectory = Path.GetDirectoryName(Path.GetFullPath(slnFilePath));
             if (baseDirectory != null)
@@ -116,7 +118,7 @@ internal partial class WorkspaceBuildTargetsHandler
                         {
                             Id = new BuildTargetIdentifier
                             {
-                                Uri = new System.Uri(Path.Combine(launchSettingsPath, profile.Key), UriKind.Absolute)
+                                Uri = new System.Uri($"{launchSettingsPath}#{profile.Key}", UriKind.Absolute)
                             },
                             DisplayName = profile.Key + " [LaunchProfile]",
                             LanguageIds = new[] { LanguageId.Csharp },
@@ -138,15 +140,11 @@ internal partial class WorkspaceBuildTargetsHandler
         var list = new List<BuildTarget>();
         foreach (var project in projects)
         {
-            var outputType = project.GetProperty("OutputType");
-            var canRun = outputType?.EvaluatedValue.Equals("Exe", StringComparison.OrdinalIgnoreCase) ?? true;
-            var canTest = project.AllEvaluatedItems.Any(item => 
-                item.ItemType.Equals(PACKAGE_REFERENCE_TAG, StringComparison.OrdinalIgnoreCase) &&
-                item.EvaluatedInclude.Equals("Microsoft.NET.Test.Sdk", StringComparison.OrdinalIgnoreCase));
+            var canRun = project.IsRunnableProject();
+            var canTest = project.IsTestProject();
             var tags = new List<BuildTargetTag>();
             //TODO: mark Libraries with BuildTargetTag.Library tag
-            if (canRun)
-            {
+            if (canRun) {
                 if (canTest)
                 {
                     tags.Add(BuildTargetTag.Test);

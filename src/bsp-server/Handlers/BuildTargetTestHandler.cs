@@ -81,9 +81,10 @@ internal class BuildTargetTestHandler
             }
 
             var workspacePath = initParams.RootUri.AbsolutePath;
-            context.Logger.LogInformation("GetLoadedProjects from {}", workspacePath);
             _baseProtocolClientManager.SendClearDiagnosticsMessage();
-            foreach (var proj in projects.LoadedProjects)
+            var testProjects = projects.LoadedProjects.Where(x => x.IsTestProject());
+            context.Logger.LogInformation("Get loaded test projects from {}", workspacePath);
+            foreach (var proj in testProjects)
             {
                 var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, workspacePath, proj.FullPath);
                 var results = RunAllTests(proj, context, msBuildLogger);
@@ -118,7 +119,7 @@ internal class BuildTargetTestHandler
 
         var diagParams = new PublishDiagnosticsParams
         {
-            TextDocument = new TextDocumentIdentifier { Uri = UriWithSchema(result.TestCase.CodeFilePath ?? "") },
+            TextDocument = new TextDocumentIdentifier { Uri = UriFixer.WithFileSchema(result.TestCase.CodeFilePath ?? "") },
             BuildTarget = new BuildTargetIdentifier { Uri = result.TestCase.ExecutorUri },
         };
 
@@ -375,12 +376,5 @@ internal class BuildTargetTestHandler
         {
             // No op
         }
-    
-    }
-
-    private Uri UriWithSchema(string path)
-    {
-        // workaround for "file://" schema being not serialized: https://github.com/dotnet/runtime/issues/90140
-        return new Uri($"file://{path}", UriKind.Absolute);
     }
 }
