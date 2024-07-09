@@ -60,6 +60,24 @@ internal class BuildTargetRunHandler
 
                     context.Logger.LogInformation("Command to run: " + command);
 
+
+                    void HandleProcessExit(object? sender, EventArgs e)
+                    {
+                        if (!process.WaitForExit(0))
+                        {
+                            process.Kill();
+                        }
+                    }
+
+                    void HandleCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
+                    {
+                        // Ignore SIGINT/SIGQUIT so that the process can handle the signal
+                        e.Cancel = true;
+                    }
+
+                    Console.CancelKeyPress += HandleCancelKeyPress;
+                    AppDomain.CurrentDomain.ProcessExit += HandleProcessExit;
+
                     process.Start();
 
                     // var stdin = process.StandardInput;
