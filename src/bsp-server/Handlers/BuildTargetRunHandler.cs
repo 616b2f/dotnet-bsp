@@ -114,19 +114,7 @@ internal class BuildTargetRunHandler
                         }
                     });
 
-
-                    var periodicTimer= new PeriodicTimer(TimeSpan.FromSeconds(3));
-                    while (await periodicTimer.WaitForNextTickAsync())
-                    {
-                        if (cancellationToken.IsCancellationRequested)
-                        {
-                            context.Logger.LogInformation("Cancelation requested, kill process");
-                            process.Kill();
-                            break;
-                        }
-                    }
-
-                    process.WaitForExit();
+                    await process.WaitForExitAsync();
                     context.Logger.LogInformation("WaitForExit returned");
                 });
             }
