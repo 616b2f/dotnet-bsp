@@ -1,7 +1,8 @@
-namespace dotnet_bsp.Handlers;
+namespace dotnet_bsp;
 
 public record LaunchSettingsProfile(
     string CommandName,
+    string? CommandLineArgs,
     bool DotnetRunMessages,
     bool LaunchBrowser,
     string LaunchUrl,

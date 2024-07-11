@@ -100,9 +100,9 @@ internal partial class WorkspaceBuildTargetsHandler
     private IEnumerable<BuildTarget> GetLaunchSettingsProfilesAsBuildTargets(IEnumerable<string> projectRootPaths, IBpLogger logger)
     {
         var list = new List<BuildTarget>();
-        foreach(var projectRoothPath in projectRootPaths)
+        foreach(var projectRootPath in projectRootPaths)
         {
-            var launchSettingsPath = Path.Combine(projectRoothPath, "Properties", "launchSettings.json");
+            var launchSettingsPath = Path.Combine(projectRootPath, "Properties", "launchSettings.json");
             if (File.Exists(launchSettingsPath))
             {
                 var content = File.ReadAllText(launchSettingsPath);
