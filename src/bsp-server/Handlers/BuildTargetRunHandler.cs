@@ -46,9 +46,9 @@ internal class BuildTargetRunHandler
 
                 await Task.Run(async () => {
                     using Process process = new Process();
-                    process.StartInfo.UseShellExecute = false;
                     process.StartInfo.FileName = command;
                     process.StartInfo.CreateNoWindow = true;
+                    process.StartInfo.UseShellExecute = false;
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.RedirectStandardError = true;
                     process.StartInfo.WorkingDirectory = workspacePath;
@@ -60,12 +60,11 @@ internal class BuildTargetRunHandler
 
                     context.Logger.LogInformation("Command to run: " + command);
 
-
                     void HandleProcessExit(object? sender, EventArgs e)
                     {
                         if (!process.WaitForExit(0))
                         {
-                            process.Kill();
+                            process.Kill(ProcessExtensions.SIGINT);
                         }
                     }
 
@@ -78,6 +77,8 @@ internal class BuildTargetRunHandler
                     Console.CancelKeyPress += HandleCancelKeyPress;
                     AppDomain.CurrentDomain.ProcessExit += HandleProcessExit;
 
+                    cancellationToken.Register(() => process.Kill(ProcessExtensions.SIGINT));
+
                     process.Start();
 
                     // var stdin = process.StandardInput;
@@ -86,15 +87,15 @@ internal class BuildTargetRunHandler
                     var stdoutTask = Task.Run(async () => {
                         while (await stdout.ReadLineAsync() is string line && line != null)
                         {
-                            if (cancellationToken.IsCancellationRequested)
-                            {
-                                break;
-                            }
-
                             var printParams = new PrintParams { Message = line };
                             await _baseProtocolClientManager.SendNotificationAsync<PrintParams>(
                                 Methods.RunPrintStdout,
                                 printParams, cancellationToken);
+
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                break;
+                            }
                         }
                     });
 
@@ -102,21 +103,21 @@ internal class BuildTargetRunHandler
                     _ = Task.Run(async () => {
                         while (await stderr.ReadLineAsync() is string line && line != null)
                         {
-                            if (cancellationToken.IsCancellationRequested)
-                            {
-                                break;
-                            }
-
                             var printParams = new PrintParams { Message = line };
                             await _baseProtocolClientManager.SendNotificationAsync<PrintParams>(
                                 Methods.RunPrintStderr,
                                 printParams, cancellationToken);
+
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                break;
+                            }
                         }
                     });
 
-                    await process.WaitForExitAsync();
-                    context.Logger.LogInformation("WaitForExit returned");
-                });
+                    await process.WaitForExitAsync(cancellationToken);
+                },
+                cancellationToken);
             }
         }
 
