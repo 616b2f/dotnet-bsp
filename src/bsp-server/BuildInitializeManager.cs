@@ -25,6 +25,7 @@ internal class BuildInitializeManager : IInitializeManager<InitializeBuildParams
         var initializeResult = new InitializeBuildResult
         {
             DisplayName = "dotnet-bsp",
+            Version = "0.0.1",
             BspVersion = "2.1.1",
             Capabilities = serverCapabilities,
         };
@@ -42,4 +43,3 @@ internal class BuildInitializeManager : IInitializeManager<InitializeBuildParams
         return _initializeParams;
     }
 }
-

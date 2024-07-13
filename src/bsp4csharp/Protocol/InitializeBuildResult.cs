@@ -15,25 +15,25 @@ public class InitializeBuildResult
     /// Name of the server
     /// </summary>
     [DataMember(Name = "displayName")]
-    public string DisplayName { get; set; }
+    public required string DisplayName { get; set; }
 
     /// <summary>
     /// The version of the server
     /// </summary>
     [DataMember(Name = "version")]
-    public string Version { get; set; }
+    public required string Version { get; set; }
 
     /// <summary>
     /// The BSP version that the server speaks
     /// </summary>
     [DataMember(Name = "bspVersion")]
-    public string BspVersion { get; set; }
+    public required string BspVersion { get; set; }
 
     /// <summary>
     /// Gets or sets the server capabilities.
     /// </summary>
     [DataMember(Name = "capabilities")]
-    public BuildServerCapabilities Capabilities
+    public required BuildServerCapabilities Capabilities
     {
         get;
         set;
@@ -53,4 +53,3 @@ public class InitializeBuildResult
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public object? Data { get; set; }
 }
-

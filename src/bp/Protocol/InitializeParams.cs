@@ -64,7 +64,7 @@ namespace BaseProtocol.Protocol
         /// Gets or sets the capabilities supported by the client.
         /// </summary>
         [DataMember(Name = "capabilities")]
-        public object Capabilities
+        public object? Capabilities
         {
             get;
             set;
@@ -99,7 +99,7 @@ namespace BaseProtocol.Protocol
         /// Gets or sets the server capabilities.
         /// </summary>
         [DataMember(Name = "capabilities")]
-        public object Capabilities
+        public object? Capabilities
         {
             get;
             set;

@@ -9,7 +9,7 @@ namespace BaseProtocol.Protocol
         /// Gets or sets the name of the server
         /// </summary>
         [DataMember(Name = "name")]
-        public string Name
+        public required string Name
         {
             get;
             set;
