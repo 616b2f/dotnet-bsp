@@ -86,7 +86,7 @@ internal class BuildTargetTestHandler
             context.Logger.LogInformation("Get loaded test projects from {}", workspacePath);
             foreach (var proj in testProjects)
             {
-                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, workspacePath, proj.FullPath);
+                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testParams.OriginId, workspacePath, proj.FullPath);
                 var results = RunAllTests(proj, context, msBuildLogger);
                 foreach (var result in results)
                 {
@@ -110,6 +110,7 @@ internal class BuildTargetTestHandler
 
         return Task.FromResult(new TestResult
         {
+            OriginId = testParams.OriginId,
             StatusCode = testResult ? StatusCode.Ok : StatusCode.Error
         });
     }

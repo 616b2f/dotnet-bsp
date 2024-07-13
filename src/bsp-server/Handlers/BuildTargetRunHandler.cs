@@ -53,30 +53,31 @@ internal class BuildTargetRunHandler
 
                     context.Logger.LogInformation($"LaunchProfile: {JsonConvert.SerializeObject(launchProfile)}");
                     var commandLineArgs = launchProfile.CommandLineArgs?.Split(" ", StringSplitOptions.TrimEntries) ?? [];
-                    await RunTargetAsync(projectFile.FullName, context, commandLineArgs, launchProfile.EnvironmentVariables, cancellationToken);
+                    await RunTargetAsync(projectFile.FullName, runParams.OriginId, context, commandLineArgs, launchProfile.EnvironmentVariables, cancellationToken);
                 }
             }
             else if (fileExtension == ".csproj")
             {
                 var commandLineArgs = runParams.Arguments ?? [];
-                await RunTargetAsync(target, context, commandLineArgs, runParams.EnvironmentVariables, cancellationToken);
+                await RunTargetAsync(target, runParams.OriginId, context, commandLineArgs, runParams.EnvironmentVariables, cancellationToken);
             }
         }
 
         return new RunResult
         {
+            OriginId = runParams.OriginId,
             StatusCode = runResult ? StatusCode.Ok : StatusCode.Error
         };
     }
 
-    private async Task RunTargetAsync(string target, RequestContext context, string[] commandLineArgs, Dictionary<string, string> environmentVariables, CancellationToken cancellationToken)
+    private async Task RunTargetAsync(string target, string? originId, RequestContext context, string[] commandLineArgs, Dictionary<string, string> environmentVariables, CancellationToken cancellationToken)
     {
         var projectFile = target;
         var proj = new ProjectInstance(projectFile);
         var initParams = _capabilitiesManager.GetInitializeParams();
         var workspacePath = initParams.RootUri.AbsolutePath;
 
-        var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, workspacePath, projectFile);
+        var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, originId, workspacePath, projectFile);
         proj.Build(["Restore", "Build"], [msBuildLogger]);
 
         var command = proj.GetPropertyValue("RunCommand");

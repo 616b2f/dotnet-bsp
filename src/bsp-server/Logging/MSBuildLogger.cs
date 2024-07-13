@@ -11,14 +11,16 @@ namespace dotnet_bsp.Logging
         private readonly IBaseProtocolClientManager _baseProtocolClientManager;
         private readonly string _workspacePath;
         private readonly string _buildTarget;
+        private readonly string? _originId;
         private readonly ICollection<string> _diagnosticKeysCollection = [];
         private int Warnings = 0;
         private int Errors = 0;
         private DateTime _buildStartTimestamp;
 
-        public MSBuildLogger(BaseProtocol.IBaseProtocolClientManager baseProtocolClientManager, string workspacePath, string buildTarget)
+        public MSBuildLogger(BaseProtocol.IBaseProtocolClientManager baseProtocolClientManager, string? originId, string workspacePath, string buildTarget)
         {
             _baseProtocolClientManager = baseProtocolClientManager;
+            _originId = originId;
             _workspacePath = workspacePath;
             _buildTarget = buildTarget;
             Parameters = string.Empty;
@@ -49,6 +51,7 @@ namespace dotnet_bsp.Logging
             var taskStartParams = new TaskStartParams
             {
                 TaskId = taskId,
+                OriginId = _originId,
                 Message = e.Message,
                 EventTime = e.Timestamp.Millisecond,
                 DataKind = TaskStartDataKind.CompileTask,
@@ -78,6 +81,7 @@ namespace dotnet_bsp.Logging
             var taskFinishParams = new TaskFinishParams
             {
                 TaskId = taskId,
+                OriginId = _originId,
                 Message = e.Message,
                 EventTime = e.Timestamp.Millisecond,
                 Status = e.Succeeded ? StatusCode.Ok : StatusCode.Error,
@@ -106,6 +110,7 @@ namespace dotnet_bsp.Logging
             var taskStartParams = new TaskStartParams
             {
                 TaskId = taskId,
+                OriginId = _originId,
                 Message = "[" + (e.SenderName ?? "MSBUILD") + "]: " + e.Message,
                 EventTime = e.Timestamp.Millisecond
             };
@@ -125,6 +130,7 @@ namespace dotnet_bsp.Logging
             var taskFinishParams = new TaskFinishParams
             {
                 TaskId = taskId,
+                OriginId = _originId,
                 Message = "[" + (e.SenderName ?? "MSBUILD") + "]: " + e.Message,
                 EventTime = e.Timestamp.Millisecond,
                 Status = e.Succeeded ? StatusCode.Ok : StatusCode.Error,
@@ -141,6 +147,7 @@ namespace dotnet_bsp.Logging
                 var taskProgressParams = new TaskProgressParams
                 {
                     TaskId = new TaskId { Id = e.ProjectFile },
+                    OriginId = _originId,
                     Message = "[" + e.TaskName + "][" + projectFile + "]:" + e.Message ?? "",
                 };
                 _ = _baseProtocolClientManager.SendNotificationAsync(
@@ -156,6 +163,7 @@ namespace dotnet_bsp.Logging
                 var taskProgressParams = new TaskProgressParams
                 {
                     TaskId = new TaskId { Id = e.ProjectFile },
+                    OriginId = _originId,
                     Message = "[" + e.TaskName + "][" + projectFile + "]:" + e.Message ?? "",
                 };
                 _ = _baseProtocolClientManager.SendNotificationAsync(
@@ -188,6 +196,7 @@ namespace dotnet_bsp.Logging
                 var taskProgressParams = new TaskProgressParams
                 {
                     TaskId = new TaskId { Id = e.ThreadId.ToString() },
+                    OriginId = _originId,
                     Message = message,
                 };
                 _ = _baseProtocolClientManager.SendNotificationAsync(

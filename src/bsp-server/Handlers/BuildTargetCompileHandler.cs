@@ -76,13 +76,14 @@ internal class BuildTargetCompileHandler
             foreach (var proj in projects.LoadedProjects)
             {
                 context.Logger.LogInformation("Start building target: {}", proj.FullPath);
-                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, workspacePath, proj.FullPath);
+                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, compileParams.OriginId, workspacePath, proj.FullPath);
                 buildResult |= proj.Build(["Restore", "Rebuild"], new [] {msBuildLogger});
             }
         }
 
         return Task.FromResult(new CompileResult
         {
+            OriginId = compileParams.OriginId,
             StatusCode = buildResult ? StatusCode.Ok : StatusCode.Error
         });
     }
