@@ -3,6 +3,39 @@ Build Server for .NET C#. BSP is designed to allow your editor to communicate wi
 
 This is currently in active development and is not stable. You are welcome to contibute and make PRs.
 
+Implemented server interface features:
+
+- [x] BuildInitialize: request
+- [x] OnBuildInitialized: notification
+- [x] BuildShutdown: request
+- [x] OnBuildExit: notification
+- [x] WorkspaceBuildTargets: request
+- [ ] WorkspaceReload: request
+- [ ] BuildTargetSources: request
+- [ ] BuildTargetInverseSources: request
+- [ ] BuildTargetDependencySources: request
+- [ ] BuildTargetDependencyModules: request
+- [ ] BuildTargetResources: request
+- [ ] BuildTargetOutputPaths: request
+- [x] BuildTargetCompile: request
+- [x] BuildTargetRun: request
+- [x] BuildTargetTest: request
+- [ ] DebugSessionStart: request
+- [x] BuildTargetCleanCache: request
+- [ ] OnRunReadStdin: notification
+
+Client remote interface features:
+
+- [x] OnBuildShowMessage: notification
+- [x] OnBuildLogMessage: notification
+- [x] OnBuildPublishDiagnostics: notification
+- [x] OnBuildTargetDidChange: notification
+- [x] OnBuildTaskStart: notification
+- [x] OnBuildTaskProgress: notification
+- [x] OnBuildTaskFinish: notification
+- [x] OnRunPrintStdout: notification
+- [x] OnRunPrintStderr: notification
+
 # Build
 
 ```sh
