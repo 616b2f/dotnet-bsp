@@ -295,7 +295,7 @@ internal class BuildTargetTestHandler
             this.TestResults = new List<MsTestResult>();
         }
 
-        public void HandleLogMessage(TestMessageLevel level, string message)
+        public void HandleLogMessage(TestMessageLevel level, string? message)
         {
             Console.WriteLine("Run Message: " + message);
         }

@@ -3,6 +3,8 @@ using System.Runtime.Serialization;
 namespace bsp4csharp.Protocol;
 
 [DataContract]
-public class SourcesResult
+public record SourcesResult
 {
+    [DataMember(Name = "items")]
+    public required SourcesItem[] Items { get; init; }
 }
