@@ -10,6 +10,7 @@ using TestResult = bsp4csharp.Protocol.TestResult;
 using BaseProtocol.Protocol;
 using Newtonsoft.Json;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
+using Newtonsoft.Json.Linq;
 
 namespace dotnet_bsp.Handlers;
 
@@ -69,20 +70,12 @@ internal partial class BuildTargetTestHandler
 
                     foreach (var projectFile in projectFilesInSln)
                     {
-                        var proj = projects.LoadProject(projectFile);
-                        if (!projectTargets.ContainsKey(proj.FullPath))
-                        {
-                            projectTargets[proj.FullPath] = new List<string>();
-                        }
+                        HandleProject(testParams, projects, projectFile, projectTargets);
                     }
                 }
                 else if (fileExtension == ".csproj")
                 {
-                    var proj = projects.LoadProject(target.Uri.ToString());
-                    if (!projectTargets.ContainsKey(proj.FullPath))
-                    {
-                        projectTargets[proj.FullPath] = new List<string>();
-                    }
+                    HandleProject(testParams, projects, target.Uri.ToString(), projectTargets);
                 }
                 else if (fileExtension == ".cs")
                 {
@@ -137,6 +130,25 @@ internal partial class BuildTargetTestHandler
         });
     }
 
+    private void HandleProject(TestParams testParams, ProjectCollection projects, string projectFile, Dictionary<string, List<string>> projectTargets)
+    {
+        var proj = projects.LoadProject(projectFile);
+        if (!projectTargets.ContainsKey(proj.FullPath))
+        {
+            projectTargets[proj.FullPath] = new List<string>();
+
+            if (testParams.DataKind == TestParamsDataKinds.DotnetTest &&
+                testParams.Data is JObject)
+            {
+                var dotnetTestParamsData = ((JObject)testParams.Data).ToObject<DotnetTestParamsData>();
+                if (dotnetTestParamsData is not null)
+                {
+                    projectTargets[proj.FullPath].AddRange(dotnetTestParamsData.Filters);
+                }
+            }
+        }
+    }
+
     private void WriteDiagnostic(MsTestResult result)
     {
 
@@ -170,7 +182,7 @@ internal partial class BuildTargetTestHandler
             Methods.BuildPublishDiagnostics, diagParams, CancellationToken.None);
     }
 
-    private List<MsTestResult> RunAllTests(Project proj, IEnumerable<string> targets, List<string> sourceFiles, RequestContext context, MSBuildLogger msBuildLogger)
+    private List<MsTestResult> RunAllTests(Project proj, IEnumerable<string> targets, List<string> testCaseFilters, RequestContext context, MSBuildLogger msBuildLogger)
     {
         context.Logger.LogInformation("Restore and build test target: {}", proj.ProjectFileLocation);
         var buildSuccess = proj.Build(["Restore", "Build"], [msBuildLogger]);
@@ -206,7 +218,6 @@ internal partial class BuildTargetTestHandler
         context.Logger.LogInformation("RunnerLocation: {}", runnerLocation);
         context.Logger.LogInformation("TestAdapter: {}", testAdapterPath);
 
-        // IVsTestConsoleWrapper consoleWrapper = new VsTestConsoleWrapper(runnerLocation, new ConsoleParameters { LogFilePath = logFilePath });
         IVsTestConsoleWrapper consoleWrapper = new VsTestConsoleWrapper(runnerLocation);
 
         consoleWrapper.StartSession();
@@ -217,19 +228,12 @@ internal partial class BuildTargetTestHandler
 
         var runHandler = new RunEventHandler(waitHandle);
 
-        if (sourceFiles.Count > 0)
+        if (testCaseFilters.Count > 0)
         {
-            var discoveryHandler = new DiscoveryEventHandler(waitHandle);
-            consoleWrapper.DiscoverTests(targets, defaultRunSettings, discoveryHandler);
-            context.Logger.LogInformation("test cases: {}", JsonConvert.SerializeObject(discoveryHandler.DiscoveredTestCases));
-            var testCases = discoveryHandler.DiscoveredTestCases
-                .Where(x =>
-                    x.CodeFilePath is not null &&
-                    sourceFiles.Contains(x.CodeFilePath)
-                );
-            // var testOptions = new TestPlatformOptions { TestCaseFilter= "FullyQualifiedName=UnitTestProject.UnitTest.PassingTest" };
-            context.Logger.LogInformation("Run test cases: {}", JsonConvert.SerializeObject(testCases));
-            consoleWrapper.RunTests(testCases, defaultRunSettings, runHandler);
+            var filter = string.Join("|", testCaseFilters);
+            var testOptions = new TestPlatformOptions { TestCaseFilter = filter };
+            context.Logger.LogInformation("Run test cases with filters: {}", filter);
+            consoleWrapper.RunTests(targets, defaultRunSettings, testOptions, runHandler);
         }
         else
         {
