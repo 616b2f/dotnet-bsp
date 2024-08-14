@@ -11,7 +11,7 @@ Implemented server interface features:
 - [x] OnBuildExit: notification
 - [x] WorkspaceBuildTargets: request
 - [ ] WorkspaceReload: request
-- [ ] BuildTargetSources: request
+- [x] BuildTargetSources: request
 - [ ] BuildTargetInverseSources: request
 - [ ] BuildTargetDependencySources: request
 - [ ] BuildTargetDependencyModules: request
