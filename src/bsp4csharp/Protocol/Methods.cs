@@ -20,6 +20,7 @@ public static class Methods
   public const string BuildTargetCompile = "buildTarget/compile";
   public const string BuildTargetRun = "buildTarget/run";
   public const string BuildTargetTest = "buildTarget/test";
+  public const string BuildTargetTestCaseDiscovery = "buildTarget/testCaseDiscovery";
   public const string BuildTargetCleanCache = "buildTarget/cleanCache";
   public const string DebugSessionStart = "debugSession/start";
   public const string RunReadStdin = "run/readStdin";
