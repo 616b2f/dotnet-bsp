@@ -5,19 +5,16 @@ using Microsoft.Build.Evaluation;
 using dotnet_bsp.Logging;
 using Microsoft.TestPlatform.VsTestConsole.TranslationLayer;
 using Microsoft.TestPlatform.VsTestConsole.TranslationLayer.Interfaces;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using MsTestResult = Microsoft.VisualStudio.TestPlatform.ObjectModel.TestResult;
 using TestResult = bsp4csharp.Protocol.TestResult;
 using BaseProtocol.Protocol;
 using Newtonsoft.Json;
-using System.Text.RegularExpressions;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
 
 namespace dotnet_bsp.Handlers;
 
 [BaseProtocolServerEndpoint(Methods.BuildTargetTest)]
-internal class BuildTargetTestHandler
+internal partial class BuildTargetTestHandler
     : IRequestHandler<TestParams, TestResult, RequestContext>
 {
     private readonly IInitializeManager<InitializeBuildParams, InitializeBuildResult> _capabilitiesManager;
@@ -37,6 +34,7 @@ internal class BuildTargetTestHandler
     {
         var testResult = true;
         var initParams = _capabilitiesManager.GetInitializeParams();
+        var projectTargets = new Dictionary<string, List<string>>();
         if (initParams.RootUri.IsFile)
         {
             var projects = new ProjectCollection();
@@ -71,12 +69,30 @@ internal class BuildTargetTestHandler
 
                     foreach (var projectFile in projectFilesInSln)
                     {
-                        projects.LoadProject(projectFile);
+                        var proj = projects.LoadProject(projectFile);
+                        if (!projectTargets.ContainsKey(proj.FullPath))
+                        {
+                            projectTargets[proj.FullPath] = new List<string>();
+                        }
                     }
                 }
                 else if (fileExtension == ".csproj")
                 {
-                    projects.LoadProject(target.Uri.ToString());
+                    var proj = projects.LoadProject(target.Uri.ToString());
+                    if (!projectTargets.ContainsKey(proj.FullPath))
+                    {
+                        projectTargets[proj.FullPath] = new List<string>();
+                    }
+                }
+                else if (fileExtension == ".cs")
+                {
+                    var projectPath = ProjectFinder.FindProjectForTarget(target.Uri.ToString());
+                    var proj = projects.LoadProject(projectPath);
+                    if (!projectTargets.ContainsKey(proj.FullPath))
+                    {
+                        projectTargets[proj.FullPath] = new List<string>();
+                    }
+                    projectTargets[proj.FullPath].Add(target.Uri.ToString().Replace("file://", ""));
                 }
             }
 
@@ -84,21 +100,27 @@ internal class BuildTargetTestHandler
             _baseProtocolClientManager.SendClearDiagnosticsMessage();
             var testProjects = projects.LoadedProjects.Where(x => x.IsTestProject());
             context.Logger.LogInformation("Get loaded test projects from {}", workspacePath);
-            foreach (var proj in testProjects)
+            foreach (var projectTarget in projectTargets)
             {
+                var proj = projects.LoadProject(projectTarget.Key);
                 var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testParams.OriginId, workspacePath, proj.FullPath);
-                var results = RunAllTests(proj, context, msBuildLogger);
+
+                context.Logger.LogInformation("Start test target: {}", proj.ProjectFileLocation);
+                var targetPath = proj.Properties.First(x => x.Name == "TargetPath").EvaluatedValue;
+                context.Logger.LogInformation("targetPath: {}", targetPath);
+
+                var results = RunAllTests(proj, [targetPath], projectTarget.Value, context, msBuildLogger);
+                var logMessgeParams = new LogMessageParams
+                {
+                    MessageType = MessageType.Log,
+                    Message = JsonConvert.SerializeObject(results)
+                };
+
+                var _ = _baseProtocolClientManager.SendNotificationAsync(
+                    Methods.BuildLogMessage, logMessgeParams, CancellationToken.None);
+
                 foreach (var result in results)
                 {
-                    var logMessgeParams = new LogMessageParams
-                    {
-                        MessageType = MessageType.Log,
-                        Message = JsonConvert.SerializeObject(result)
-                    };
-
-                    var _ = _baseProtocolClientManager.SendNotificationAsync(
-                        Methods.BuildLogMessage, logMessgeParams, CancellationToken.None);
-
                     if (result.ErrorMessage is not null)
                     {
                         WriteDiagnostic(result);
@@ -148,7 +170,7 @@ internal class BuildTargetTestHandler
             Methods.BuildPublishDiagnostics, diagParams, CancellationToken.None);
     }
 
-    private List<MsTestResult> RunAllTests(Project proj, RequestContext context, MSBuildLogger msBuildLogger)
+    private List<MsTestResult> RunAllTests(Project proj, IEnumerable<string> targets, List<string> sourceFiles, RequestContext context, MSBuildLogger msBuildLogger)
     {
         context.Logger.LogInformation("Restore and build test target: {}", proj.ProjectFileLocation);
         var buildSuccess = proj.Build(["Restore", "Build"], [msBuildLogger]);
@@ -159,17 +181,13 @@ internal class BuildTargetTestHandler
             return [];
         }
 
-        context.Logger.LogInformation("Start test target: {}", proj.ProjectFileLocation);
-        var targetPath = proj.Properties.First(x => x.Name == "TargetPath").EvaluatedValue;
-        context.Logger.LogInformation("targetPath: {}", targetPath);
-
         var outputPath = proj.Properties.First(x => x.Name == "OutputPath").EvaluatedValue;
         context.Logger.LogInformation("outputPath: {}", outputPath);
 
         var assemblyName = proj.Properties.First(x => x.Name == "AssemblyName").EvaluatedValue;
         context.Logger.LogInformation("assemblyName: {}", assemblyName);
 
-        var runnerLocation = FindVsTestConsole();
+        var runnerLocation = TestRunner.FindVsTestConsole();
 
         if (runnerLocation is null)
         {
@@ -177,7 +195,7 @@ internal class BuildTargetTestHandler
             return [];
         }
 
-        var testAdapterPath = FindTestAdapter(proj, context);
+        var testAdapterPath = TestRunner.FindTestAdapter(proj, context);
 
         if (testAdapterPath is null)
         {
@@ -197,185 +215,30 @@ internal class BuildTargetTestHandler
         var waitHandle = new AutoResetEvent(false);
         var defaultRunSettings = "<RunSettings><RunConfiguration></RunConfiguration></RunSettings>";
 
-        consoleWrapper.DiscoverTests([targetPath], defaultRunSettings, new DiscoveryEventHandler(waitHandle));
-
         var runHandler = new RunEventHandler(waitHandle);
 
-        context.Logger.LogInformation("Run test target: {}", targetPath);
-        consoleWrapper.RunTests([targetPath], defaultRunSettings, runHandler);
+        if (sourceFiles.Count > 0)
+        {
+            var discoveryHandler = new DiscoveryEventHandler(waitHandle);
+            consoleWrapper.DiscoverTests(targets, defaultRunSettings, discoveryHandler);
+            context.Logger.LogInformation("test cases: {}", JsonConvert.SerializeObject(discoveryHandler.DiscoveredTestCases));
+            var testCases = discoveryHandler.DiscoveredTestCases
+                .Where(x =>
+                    x.CodeFilePath is not null &&
+                    sourceFiles.Contains(x.CodeFilePath)
+                );
+            // var testOptions = new TestPlatformOptions { TestCaseFilter= "FullyQualifiedName=UnitTestProject.UnitTest.PassingTest" };
+            context.Logger.LogInformation("Run test cases: {}", JsonConvert.SerializeObject(testCases));
+            consoleWrapper.RunTests(testCases, defaultRunSettings, runHandler);
+        }
+        else
+        {
+            context.Logger.LogInformation("Run test targets: {}", targets);
+            consoleWrapper.RunTests(targets, defaultRunSettings, runHandler);
+        }
 
         waitHandle.WaitOne();
         return runHandler.TestResults;
     }
 
-    private record SdkVersion(int Major, int Minor, int Patch, string DirPath);
-
-    private string? FindVsTestConsole()
-    {
-        var userDir = Environment.ExpandEnvironmentVariables("%HOME%/.dotnet");
-        string[] dirs = [
-            userDir,
-            "/usr/lib/dotnet/sdk",
-            "/usr/lib64/dotnet/sdk",
-            "/usr/share/dotnet/sdk"
-        ];
-
-        var versions = new List<SdkVersion>();
-        foreach (var dir in dirs)
-        {
-            if (!Directory.Exists(dir))
-            {
-                continue;
-            }
-
-            foreach (var sdkdir in Directory.GetDirectories(dir))
-            {
-                var rex = new Regex(@"(\d*)\.(\d*)\.(\d*)");
-                var match = rex.Match(sdkdir);
-                if (match.Success)
-                {
-                    versions.Add(
-                        new SdkVersion(
-                            int.Parse(match.Groups[1].Value),
-                            int.Parse(match.Groups[2].Value),
-                            int.Parse(match.Groups[3].Value),
-                            sdkdir
-                        )
-                    );
-                }
-            }
-        }
-
-        var highestVersion = versions
-            .OrderByDescending(x => x.Major)
-            .ThenByDescending(x => x.Minor)
-            .ThenByDescending(x => x.Patch)
-            .FirstOrDefault();
-
-        if (highestVersion is not null)
-        {
-            return Path.Combine(highestVersion.DirPath, "vstest.console.dll");
-        }
-
-        return null;
-    }
-
-    private string? FindTestAdapter(Project proj, RequestContext context)
-    {
-        var targetPath = proj.Properties.First(x => x.Name == "TargetPath").EvaluatedValue;
-        var targetDirectory = Path.GetDirectoryName(targetPath);
-        if (targetDirectory is null)
-        {
-            context.Logger.LogError("can't get root directory of target: {}", targetPath);
-            return null;
-        }
-
-        var testAdapterPath = Directory.GetFiles(targetDirectory)
-            .FirstOrDefault(x => x.EndsWith(".testadapter.dll", StringComparison.InvariantCultureIgnoreCase));
-
-        if (testAdapterPath is null)
-        {
-            context.Logger.LogError("Can't find testadapter in path: {}", targetDirectory);
-            return null;
-        }
-
-        context.Logger.LogInformation("test adapter found: {}", testAdapterPath);
-        return testAdapterPath;
-    }
-
-    public class RunEventHandler : ITestRunEventsHandler
-    {
-        private AutoResetEvent waitHandle;
-
-        public List<MsTestResult> TestResults { get; private set; }
-
-        public RunEventHandler(AutoResetEvent waitHandle)
-        {
-            this.waitHandle = waitHandle;
-            this.TestResults = new List<MsTestResult>();
-        }
-
-        public void HandleLogMessage(TestMessageLevel level, string? message)
-        {
-            Console.WriteLine("Run Message: " + message);
-        }
-
-        public void HandleTestRunComplete(
-            TestRunCompleteEventArgs testRunCompleteArgs,
-            TestRunChangedEventArgs? lastChunkArgs,
-            ICollection<AttachmentSet>? runContextAttachments,
-            ICollection<string>? executorUris)
-        {
-            if (lastChunkArgs != null && lastChunkArgs.NewTestResults != null)
-            {
-                this.TestResults.AddRange(lastChunkArgs.NewTestResults);
-            }
-
-            Console.WriteLine("TestRunComplete");
-            waitHandle.Set();
-        }
-
-        public void HandleTestRunStatsChange(TestRunChangedEventArgs testRunChangedArgs)
-        {
-            if (testRunChangedArgs != null && testRunChangedArgs.NewTestResults != null)
-            {
-                this.TestResults.AddRange(testRunChangedArgs.NewTestResults);
-            }
-        }
-
-        public void HandleRawMessage(string rawMessage)
-        {
-            // No op
-        }
-
-        public int LaunchProcessWithDebuggerAttached(TestProcessStartInfo testProcessStartInfo)
-        {
-            // No op
-            return -1;
-        }
-    }
-
-    public class DiscoveryEventHandler : ITestDiscoveryEventsHandler
-    {
-        private AutoResetEvent waitHandle;
-
-        public List<TestCase> DiscoveredTestCases { get; private set; }
-
-        public DiscoveryEventHandler(AutoResetEvent waitHandle)
-        {
-            this.waitHandle = waitHandle;
-            this.DiscoveredTestCases = new List<TestCase>();
-        }
-
-        public void HandleDiscoveredTests(IEnumerable<TestCase> discoveredTestCases)
-        {
-            Console.WriteLine("Discovery: " + discoveredTestCases.FirstOrDefault()?.DisplayName);
-
-            if (discoveredTestCases != null)
-            {
-                this.DiscoveredTestCases.AddRange(discoveredTestCases);
-            }
-        }
-
-        public void HandleDiscoveryComplete(long totalTests, IEnumerable<TestCase> lastChunk, bool isAborted)
-        {
-            if (lastChunk != null)
-            {
-                this.DiscoveredTestCases.AddRange(lastChunk);
-            }
-
-            Console.WriteLine("DiscoveryComplete");
-            waitHandle.Set();
-        }
-
-        public void HandleLogMessage(TestMessageLevel level, string message)
-        {
-            Console.WriteLine("Discovery Message: " + message);
-        }
-
-        public void HandleRawMessage(string rawMessage)
-        {
-            // No op
-        }
-    }
 }
