@@ -23,6 +23,7 @@ Implemented server interface features:
 - [ ] DebugSessionStart: request
 - [x] BuildTargetCleanCache: request
 - [ ] OnRunReadStdin: notification
+- [x] BuildTargetTestCaseDiscovery: request (not in the official specs!)
 
 Client remote interface features:
 

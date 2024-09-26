@@ -6,21 +6,23 @@ using BaseProtocol;
 
 namespace dotnet_bsp.Handlers;
 
-public class DiscoveryEventHandler : ITestDiscoveryEventsHandler
+public class TestDiscoveryEventHandler : ITestDiscoveryEventsHandler
 {
-    private AutoResetEvent waitHandle;
+    private AutoResetEvent _waitHandle;
+    private readonly BuildTargetIdentifier _buildTarget;
     private readonly string? _originId;
     private readonly IBaseProtocolClientManager _baseProtocolClientManager;
 
     private readonly TaskId _taskId;
 
-    public DiscoveryEventHandler(AutoResetEvent waitHandle, string? originId, IBaseProtocolClientManager baseProtocolClientManager)
+    public TestDiscoveryEventHandler(AutoResetEvent waitHandle, BuildTargetIdentifier buildTarget, string? originId, IBaseProtocolClientManager baseProtocolClientManager)
     {
-        this.waitHandle = waitHandle;
-        this._originId = originId;
-        this._baseProtocolClientManager = baseProtocolClientManager;
-
+        _waitHandle = waitHandle;
+        _buildTarget = buildTarget;
+        _originId = originId;
+        _baseProtocolClientManager = baseProtocolClientManager;
         _taskId = new TaskId { Id = Guid.NewGuid().ToString() };
+
         StartTestCaseDiscovery();
     }
 
@@ -60,7 +62,9 @@ public class DiscoveryEventHandler : ITestDiscoveryEventsHandler
                 DataKind = TaskProgressDataKind.TestCaseDiscovered,
                 Data = new TestCaseDiscoveredData
                 {
+                    BuildTarget = _buildTarget,
                     Source = testCase.Source,
+                    FilePath = testCase.CodeFilePath ?? "",
                     DisplayName = testCase.DisplayName,
                     FullyQualifiedName = testCase.FullyQualifiedName,
                     Line = testCase.LineNumber
@@ -82,7 +86,7 @@ public class DiscoveryEventHandler : ITestDiscoveryEventsHandler
         {
             TaskId = _taskId,
             OriginId = _originId,
-            Message = "",
+            Message = "Test case discovery finished",
             EventTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             Status = StatusCode.Ok,
             DataKind = TaskFinishDataKind.TestCaseDiscoveryFinish,
@@ -90,7 +94,7 @@ public class DiscoveryEventHandler : ITestDiscoveryEventsHandler
         var _ = _baseProtocolClientManager.SendNotificationAsync(
             Methods.BuildTaskFinish, taskFinishParams, CancellationToken.None);
         Console.WriteLine("DiscoveryComplete");
-        waitHandle.Set();
+        _waitHandle.Set();
     }
 
     public void HandleLogMessage(TestMessageLevel level, string? message)

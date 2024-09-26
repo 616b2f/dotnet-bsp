@@ -15,25 +15,25 @@ public class InitializeBuildParams
     /// Name of the client
     /// </summary>
     [DataMember(Name = "displayName")]
-    public string DisplayName { get; set; }
+    public required string DisplayName { get; set; }
 
     /// <summary>
     /// The version of the client
     /// </summary>
     [DataMember(Name = "version")]
-    public string Version { get; set; }
+    public required string Version { get; set; }
 
     /// <summary>
     /// The BSP version that the client speaks
     /// </summary>
     [DataMember(Name = "bspVersion")]
-    public string BspVersion { get; set; }
+    public required string BspVersion { get; set; }
 
     /// <summary>
     /// Gets or sets the capabilities supported by the client.
     /// </summary>
     [DataMember(Name = "capabilities")]
-    public BuildClientCapabilities Capabilities
+    public required BuildClientCapabilities Capabilities
     {
         get;
         set;
@@ -43,7 +43,7 @@ public class InitializeBuildParams
     /// The rootUri of the workspace
     /// </summary>
     [DataMember(Name = "rootUri")]
-    public Uri RootUri { get; set; }
+    public required Uri RootUri { get; set; }
 
     /// <summary>
     /// Kind of data to expect in the `data` field. If this field is not set, the kind of data is not specified.

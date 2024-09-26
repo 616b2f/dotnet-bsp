@@ -5,12 +5,10 @@ using Microsoft.Build.Evaluation;
 using dotnet_bsp.Logging;
 using Microsoft.TestPlatform.VsTestConsole.TranslationLayer;
 using Microsoft.TestPlatform.VsTestConsole.TranslationLayer.Interfaces;
-using MsTestResult = Microsoft.VisualStudio.TestPlatform.ObjectModel.TestResult;
 using TestResult = bsp4csharp.Protocol.TestResult;
-using BaseProtocol.Protocol;
-using Newtonsoft.Json;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
 using Newtonsoft.Json.Linq;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 
 namespace dotnet_bsp.Handlers;
 
@@ -75,7 +73,7 @@ internal partial class BuildTargetTestHandler
                 }
                 else if (fileExtension == ".csproj")
                 {
-                    HandleProject(testParams, projects, target.Uri.ToString(), projectTargets);
+                    HandleProject(testParams, projects, target.Uri.ToString().Replace("file://", ""), projectTargets);
                 }
                 else if (fileExtension == ".cs")
                 {
@@ -102,24 +100,7 @@ internal partial class BuildTargetTestHandler
                 var targetPath = proj.Properties.First(x => x.Name == "TargetPath").EvaluatedValue;
                 context.Logger.LogInformation("targetPath: {}", targetPath);
 
-                var results = RunAllTests(proj, [targetPath], projectTarget.Value, context, msBuildLogger);
-                var logMessgeParams = new LogMessageParams
-                {
-                    MessageType = MessageType.Log,
-                    Message = JsonConvert.SerializeObject(results)
-                };
-
-                var _ = _baseProtocolClientManager.SendNotificationAsync(
-                    Methods.BuildLogMessage, logMessgeParams, CancellationToken.None);
-
-                foreach (var result in results)
-                {
-                    if (result.ErrorMessage is not null)
-                    {
-                        WriteDiagnostic(result);
-                        testResult = false;
-                    }
-                }
+                RunAllTests(proj, [targetPath], testParams.OriginId, projectTarget.Value, context, msBuildLogger);
             }
         }
 
@@ -149,40 +130,7 @@ internal partial class BuildTargetTestHandler
         }
     }
 
-    private void WriteDiagnostic(MsTestResult result)
-    {
-
-        var diagParams = new PublishDiagnosticsParams
-        {
-            TextDocument = new TextDocumentIdentifier { Uri = UriFixer.WithFileSchema(result.TestCase.CodeFilePath ?? "") },
-            BuildTarget = new BuildTargetIdentifier { Uri = result.TestCase.ExecutorUri },
-        };
-
-        var key = string.Concat(diagParams.TextDocument.Uri, "|", diagParams.BuildTarget.Uri);
-        // diagParams.Reset = !_diagnosticKeysCollection.Contains(key);
-        // if (diagParams.Reset)
-        // {
-        //     _diagnosticKeysCollection.Add(key);
-        // }
-
-        var testCase = result.TestCase;
-        diagParams.Diagnostics.Add(new Diagnostic
-        {
-            Range = new bsp4csharp.Protocol.Range
-            {
-                Start = new Position { Line = testCase.LineNumber , Character = 0 },
-                End = new Position { Line = testCase.LineNumber, Character = 0 }
-            },
-            Message = string.Format("{0}\n{1}", result.Messages, result.ErrorStackTrace),
-            Code = result.TestCase.CodeFilePath,
-            Source = testCase.Source,
-            Severity = DiagnosticSeverity.Error
-        });
-        var _ = _baseProtocolClientManager.SendNotificationAsync(
-            Methods.BuildPublishDiagnostics, diagParams, CancellationToken.None);
-    }
-
-    private List<MsTestResult> RunAllTests(Project proj, IEnumerable<string> targets, List<string> testCaseFilters, RequestContext context, MSBuildLogger msBuildLogger)
+    private void RunAllTests(Project proj, IEnumerable<string> targets, string? originId, List<string> testCaseFilters, RequestContext context, MSBuildLogger msBuildLogger)
     {
         context.Logger.LogInformation("Restore and build test target: {}", proj.ProjectFileLocation);
         var buildSuccess = proj.Build(["Restore", "Build"], [msBuildLogger]);
@@ -190,7 +138,7 @@ internal partial class BuildTargetTestHandler
         if (!buildSuccess)
         {
             context.Logger.LogError("Restore or Build failed");
-            return [];
+            return;
         }
 
         var outputPath = proj.Properties.First(x => x.Name == "OutputPath").EvaluatedValue;
@@ -204,7 +152,7 @@ internal partial class BuildTargetTestHandler
         if (runnerLocation is null)
         {
             context.Logger.LogError("Failed to find vstest.console.dll.");
-            return [];
+            return;
         }
 
         var testAdapterPath = TestRunner.FindTestAdapter(proj, context);
@@ -212,7 +160,7 @@ internal partial class BuildTargetTestHandler
         if (testAdapterPath is null)
         {
             context.Logger.LogError("Failed to find any testadapter.");
-            return [];
+            return;
         }
 
         context.Logger.LogInformation("RunnerLocation: {}", runnerLocation);
@@ -226,7 +174,11 @@ internal partial class BuildTargetTestHandler
         var waitHandle = new AutoResetEvent(false);
         var defaultRunSettings = "<RunSettings><RunConfiguration></RunConfiguration></RunSettings>";
 
-        var runHandler = new RunEventHandler(waitHandle);
+        var buildTargetIdentifier = new BuildTargetIdentifier
+        {
+            Uri = UriFixer.WithFileSchema(proj.FullPath)
+        };
+        var runHandler = new TestRunEventHandler(waitHandle, originId, buildTargetIdentifier, _baseProtocolClientManager);
 
         if (testCaseFilters.Count > 0)
         {
@@ -242,7 +194,7 @@ internal partial class BuildTargetTestHandler
         }
 
         waitHandle.WaitOne();
-        return runHandler.TestResults;
+        consoleWrapper.EndSession();
     }
 
 }

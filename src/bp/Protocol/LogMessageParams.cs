@@ -24,11 +24,10 @@ namespace BaseProtocol.Protocol
         /// Gets or sets the message.
         /// </summary>
         [DataMember(Name = "message")]
-        public string Message
+        public required string Message
         {
             get;
             set;
         }
     }
 }
-

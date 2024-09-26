@@ -5,9 +5,6 @@ using Microsoft.Build.Evaluation;
 using dotnet_bsp.Logging;
 using Microsoft.TestPlatform.VsTestConsole.TranslationLayer;
 using Microsoft.TestPlatform.VsTestConsole.TranslationLayer.Interfaces;
-using MsTestResult = Microsoft.VisualStudio.TestPlatform.ObjectModel.TestResult;
-using BaseProtocol.Protocol;
-using Newtonsoft.Json;
 
 namespace dotnet_bsp.Handlers;
 
@@ -87,7 +84,7 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
                 var targetPath = proj.Properties.First(x => x.Name == "TargetPath").EvaluatedValue;
                 context.Logger.LogInformation("targetPath: {}", targetPath);
 
-                var result = RunAllTests(testCaseDiscoveryParams.OriginId, proj, [targetPath], context, msBuildLogger);
+                var result = RunTestDiscovery(testCaseDiscoveryParams.OriginId, proj, [targetPath], context, msBuildLogger);
 
                 if (!result)
                 {
@@ -112,7 +109,7 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
         }
     }
 
-    private bool RunAllTests(string? originId, Project proj, IEnumerable<string> targets, RequestContext context, MSBuildLogger msBuildLogger)
+    private bool RunTestDiscovery(string? originId, Project proj, IEnumerable<string> targets, RequestContext context, MSBuildLogger msBuildLogger)
     {
         context.Logger.LogInformation("Restore and build test target: {}", proj.ProjectFileLocation);
         var buildSuccess = proj.Build(["Restore", "Build"], [msBuildLogger]);
@@ -156,10 +153,12 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
         var waitHandle = new AutoResetEvent(false);
         var defaultRunSettings = "<RunSettings><RunConfiguration></RunConfiguration></RunSettings>";
 
-        var discoveryHandler = new DiscoveryEventHandler(waitHandle, originId, _baseProtocolClientManager);
+        var buildTarget = new BuildTargetIdentifier { Uri = UriFixer.WithFileSchema(proj.FullPath) };
+        var discoveryHandler = new TestDiscoveryEventHandler(waitHandle, buildTarget, originId, _baseProtocolClientManager);
         consoleWrapper.DiscoverTests(targets, defaultRunSettings, discoveryHandler);
 
         waitHandle.WaitOne();
+        consoleWrapper.EndSession();
         return true;
     }
 
