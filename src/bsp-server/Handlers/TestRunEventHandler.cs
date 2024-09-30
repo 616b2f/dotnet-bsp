@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using BaseProtocol;
 using bsp4csharp.Protocol;
+using System.Collections.ObjectModel;
 
 namespace dotnet_bsp.Handlers;
 
@@ -37,7 +38,8 @@ public class TestRunEventHandler : ITestRunEventsHandler
             OriginId = _originId,
             Message = "Test run started",
             EventTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-            DataKind = TaskStartDataKind.TestStart,
+            // TODO: add TestTask data object to Data property
+            // DataKind = TaskStartDataKind.TestTask,
         };
         _ = _baseProtocolClientManager.SendNotificationAsync(
             Methods.BuildTaskStart, taskStartParams, CancellationToken.None);
@@ -160,10 +162,96 @@ public class TestRunEventHandler : ITestRunEventsHandler
                     Progress = testRunChangedArgs.TestRunStatistics?.ExecutedTests,
                     Total = testRunChangedArgs.TestRunStatistics?.Stats?.Values.Sum(x => x),
                 };
-                _ = _baseProtocolClientManager.SendNotificationAsync(
+                var _ = _baseProtocolClientManager.SendNotificationAsync(
                     Methods.BuildTaskProgress, taskProgressParams, CancellationToken.None);
+
+
+                var testTaskId = new TaskId {
+                    Id = testResult.TestCase.FullyQualifiedName,
+                    Parents = [_taskId.Id]
+                };
+                var location = new Location
+                {
+                    Uri = UriFixer.WithFileSchema(testResult.TestCase.CodeFilePath ?? ""),
+                    Range = new bsp4csharp.Protocol.Range
+                    {
+                        Start = new Position { Line = testResult.TestCase.LineNumber },
+                        End = new Position { Line = testResult.TestCase.LineNumber }
+                    }
+                };
+                var taskTestStart = new TaskStartParams
+                {
+                    TaskId = testTaskId,
+                    OriginId = _originId,
+                    DataKind = TaskStartDataKind.TestStart,
+                    Data = new TaskStartData
+                    {
+                        DisplayName = testResult.TestCase.FullyQualifiedName,
+                        Location = location,
+                    },
+                    Message = $"Run Test: {testResult.TestCase.FullyQualifiedName}",
+                    EventTime = testResult.StartTime.ToUnixTimeMilliseconds(),
+                };
+                _ = _baseProtocolClientManager.SendNotificationAsync(
+                    Methods.BuildTaskFinish, taskTestStart, CancellationToken.None);
+                var taskTestFinish = new TaskFinishParams
+                {
+                    TaskId = testTaskId,
+                    OriginId = _originId,
+                    DataKind = TaskFinishDataKind.TestFinish,
+                    Data = new TestFinishData
+                    {
+                        DisplayName = testResult.TestCase.FullyQualifiedName,
+                        Message = CombineTestMessages(testResult.Messages, testResult.ErrorMessage, testResult.ErrorStackTrace),
+                        Status = ConvertTestOutcome(testResult.Outcome),
+                        Location = location
+                    },
+                    Message = $"Test run finished: {testResult.TestCase.FullyQualifiedName}",
+                    EventTime = testResult.EndTime.ToUnixTimeMilliseconds(),
+                };
+                _ = _baseProtocolClientManager.SendNotificationAsync(
+                    Methods.BuildTaskFinish, taskTestFinish, CancellationToken.None);
             }
         }
+    }
+
+    private TestStatus ConvertTestOutcome(TestOutcome outcome)
+    {
+        return outcome switch
+        {
+            TestOutcome.None => TestStatus.Ignored,
+            TestOutcome.NotFound => TestStatus.Ignored,
+            TestOutcome.Failed => TestStatus.Failed,
+            TestOutcome.Passed => TestStatus.Passed,
+            TestOutcome.Skipped => TestStatus.Skipped,
+            _ => throw new Exception($"Mapping was not defined for TestOutcome: {outcome}")
+        };
+    }
+
+    private string CombineTestMessages(
+        Collection<TestResultMessage> messages,
+        string? errorMessage,
+        string? errorStackTrace)
+    {
+        var texts = messages
+            .Where(x =>
+                !string.IsNullOrEmpty(x.Text) &&
+                (x.Category == TestResultMessage.StandardOutCategory ||
+                 x.Category == TestResultMessage.StandardErrorCategory))
+            .Select(x => x.Text)
+            .ToList();
+
+        if (errorMessage is not null)
+        {
+            texts.Add(errorMessage);
+        }
+
+        if (errorStackTrace is not null)
+        {
+            texts.Add(errorStackTrace);
+        }
+
+        return string.Join("\n", texts);
     }
 
     public void HandleRawMessage(string rawMessage)
