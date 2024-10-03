@@ -1,7 +1,6 @@
 using BaseProtocol;
 using bsp4csharp.Protocol;
 using Microsoft.Build.Evaluation;
-using Newtonsoft.Json;
 
 namespace dotnet_bsp.Handlers;
 
@@ -23,10 +22,10 @@ internal class BuildTargetSourcesHandler
         var items = new List<SourcesItem>();
         foreach (var target in sourcesParams.Targets)
         {
-            if (target.Uri.ToString().EndsWith(".csproj"))
+            if (target.ToString().EndsWith(".csproj"))
             {
                 var pcol = new ProjectCollection();
-                var proj = pcol.LoadProject(target.Uri.ToString());
+                var proj = pcol.LoadProject(target.ToString());
                 var documents = proj.GetItems("Compile");
 
                 var sources = new List<SourceItem>();
@@ -39,7 +38,7 @@ internal class BuildTargetSourcesHandler
                         Generated = false
                     });
                 }
-                var rootDir = Path.GetDirectoryName(target.Uri.ToString());
+                var rootDir = Path.GetDirectoryName(target.ToString());
                 Uri[] roots = (rootDir != null) ? [UriFixer.WithFileSchema(rootDir)] : [];
                 var sourcesItem = new SourcesItem
                 {

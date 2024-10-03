@@ -7,4 +7,9 @@ public record BuildTargetIdentifier
 {
     [DataMember(Name="uri")]
     public required Uri Uri { get; set; }
+
+    public override string ToString()
+    {
+        return Uri.ToString().Replace("file://", "");
+    }
 }

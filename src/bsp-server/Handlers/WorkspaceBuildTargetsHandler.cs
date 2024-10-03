@@ -48,7 +48,7 @@ internal partial class WorkspaceBuildTargetsHandler
             {
                 Id = new BuildTargetIdentifier
                 {
-                    Uri = new System.Uri(slnFilePath, UriKind.Relative)
+                    Uri = UriFixer.WithFileSchema(slnFilePath)
                 },
                 DisplayName = Path.GetFileName(slnFilePath),
                 Capabilities = new BuildTargetCapabilities
@@ -60,7 +60,7 @@ internal partial class WorkspaceBuildTargetsHandler
             var baseDirectory = Path.GetDirectoryName(Path.GetFullPath(slnFilePath));
             if (baseDirectory != null)
             {
-                buildTarget.BaseDirectory = new System.Uri(baseDirectory);
+                buildTarget.BaseDirectory = UriFixer.WithFileSchema(baseDirectory);
             }
 
             list.Add(buildTarget);
@@ -118,7 +118,7 @@ internal partial class WorkspaceBuildTargetsHandler
                         {
                             Id = new BuildTargetIdentifier
                             {
-                                Uri = new System.Uri($"{launchSettingsPath}#{profile.Key}", UriKind.Absolute)
+                                Uri = UriFixer.WithFileSchema($"{launchSettingsPath}#{profile.Key}")
                             },
                             DisplayName = profile.Key + " [LaunchProfile]",
                             LanguageIds = new[] { LanguageId.Csharp },
@@ -157,7 +157,7 @@ internal partial class WorkspaceBuildTargetsHandler
             {
                 Id = new BuildTargetIdentifier
                 {
-                    Uri = new System.Uri(project.FullPath, UriKind.Absolute)
+                    Uri = UriFixer.WithFileSchema(project.FullPath)
                 },
                 DisplayName = Path.GetFileName(project.FullPath),
                 LanguageIds = new[] { LanguageId.Csharp },

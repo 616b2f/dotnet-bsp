@@ -34,11 +34,11 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
             var projects = new ProjectCollection();
             foreach (var target in testCaseDiscoveryParams.Targets)
             {
-                var fileExtension = Path.GetExtension(target.Uri.ToString());
+                var fileExtension = Path.GetExtension(target.ToString());
                 context.Logger.LogInformation("Target file extension {}", fileExtension);
                 if (fileExtension == ".sln")
                 {
-                    var slnFile = SolutionFile.Parse(target.Uri.ToString());
+                    var slnFile = SolutionFile.Parse(target.ToString());
 
                     var configurationName = slnFile.GetDefaultConfigurationName();
                     var platformName = slnFile.GetDefaultPlatformName();
@@ -68,7 +68,7 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
                 }
                 else if (fileExtension == ".csproj")
                 {
-                    var proj = projects.LoadProject(target.Uri.ToString());
+                    var proj = projects.LoadProject(target.ToString());
                 }
             }
 

@@ -32,11 +32,11 @@ internal class BuildTargetCleanCacheHandler
             var projects = new ProjectCollection();
             foreach (var target in cleanCacheParams.Targets)
             {
-                var fileExtension = Path.GetExtension(target.Uri.ToString());
+                var fileExtension = Path.GetExtension(target.ToString());
                 context.Logger.LogInformation("Target file extension {}", fileExtension);
                 if (fileExtension == ".sln")
                 {
-                    var slnFile = SolutionFile.Parse(target.Uri.ToString());
+                    var slnFile = SolutionFile.Parse(target.ToString());
 
                     var projectFilesInSln = slnFile.ProjectsInOrder
                         .Where(x => 
@@ -51,7 +51,7 @@ internal class BuildTargetCleanCacheHandler
                 }
                 else if (fileExtension == ".csproj")
                 {
-                    projects.LoadProject(target.Uri.ToString());
+                    projects.LoadProject(target.ToString());
                 }
             }
 

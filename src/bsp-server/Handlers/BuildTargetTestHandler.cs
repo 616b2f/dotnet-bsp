@@ -39,11 +39,11 @@ internal partial class BuildTargetTestHandler
             var projects = new ProjectCollection();
             foreach (var target in testParams.Targets)
             {
-                var fileExtension = Path.GetExtension(target.Uri.ToString());
+                var fileExtension = Path.GetExtension(target.ToString());
                 context.Logger.LogInformation("Target file extension {}", fileExtension);
                 if (fileExtension == ".sln")
                 {
-                    var slnFile = SolutionFile.Parse(target.Uri.ToString());
+                    var slnFile = SolutionFile.Parse(target.ToString());
 
                     var configurationName = slnFile.GetDefaultConfigurationName();
                     var platformName = slnFile.GetDefaultPlatformName();
@@ -73,17 +73,7 @@ internal partial class BuildTargetTestHandler
                 }
                 else if (fileExtension == ".csproj")
                 {
-                    HandleProject(testParams, projects, target.Uri.ToString().Replace("file://", ""), projectTargets);
-                }
-                else if (fileExtension == ".cs")
-                {
-                    var projectPath = ProjectFinder.FindProjectForTarget(target.Uri.ToString());
-                    var proj = projects.LoadProject(projectPath);
-                    if (!projectTargets.ContainsKey(proj.FullPath))
-                    {
-                        projectTargets[proj.FullPath] = new List<string>();
-                    }
-                    projectTargets[proj.FullPath].Add(target.Uri.ToString().Replace("file://", ""));
+                    HandleProject(testParams, projects, target.ToString(), projectTargets);
                 }
             }
 

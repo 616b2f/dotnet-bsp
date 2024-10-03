@@ -29,11 +29,11 @@ internal class BuildTargetCompileHandler
         var buildResult = false;
         foreach (var target in compileParams.Targets)
         {
-            var fileExtension = Path.GetExtension(target.Uri.ToString());
+            var fileExtension = Path.GetExtension(target.ToString());
             context.Logger.LogInformation("Target file extension {}", fileExtension);
             if (fileExtension == ".sln")
             {
-                var slnFile = SolutionFile.Parse(target.Uri.ToString());
+                var slnFile = SolutionFile.Parse(target.ToString());
 
                 var configurationName = slnFile.GetDefaultConfigurationName();
                 var platformName = slnFile.GetDefaultPlatformName();
@@ -63,7 +63,7 @@ internal class BuildTargetCompileHandler
             }
             else if (fileExtension == ".csproj")
             {
-                projects.LoadProject(target.Uri.ToString());
+                projects.LoadProject(target.ToString());
             }
         }
 
