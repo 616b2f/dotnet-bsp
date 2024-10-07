@@ -39,11 +39,23 @@ internal partial class WorkspaceBuildTargetsHandler
         var list = new List<BuildTarget>();
         logger.LogInformation("Search solutin files in: {}", workspacePath);
         //TODO: think about the implications to search for all sln files in workspace
-        var slnFilePath = Directory.GetFiles(workspacePath, "*.sln").Take(1).SingleOrDefault();
+        var slnFilePath = Directory
+            .GetFiles(workspacePath, "*.sln")
+            .Take(1)
+            .SingleOrDefault();
         var projectFiles = new List<string>();
         if (!string.IsNullOrWhiteSpace(slnFilePath))
         {
             logger.LogInformation("Found solution file: {}", slnFilePath);
+            var solution = SolutionFile.Parse(slnFilePath);
+            var dependencies = solution
+                .GetProjects()
+                .Select(x =>
+                    new BuildTargetIdentifier {
+                        Uri = UriFixer.WithFileSchema(x.FullPath) 
+                    })
+                .ToArray()
+                .AsReadOnly();
             var buildTarget = new BuildTarget
             {
                 Id = new BuildTargetIdentifier
@@ -51,11 +63,12 @@ internal partial class WorkspaceBuildTargetsHandler
                     Uri = UriFixer.WithFileSchema(slnFilePath)
                 },
                 DisplayName = Path.GetFileName(slnFilePath),
+                Dependencies = dependencies,
                 Capabilities = new BuildTargetCapabilities
                 {
                     CanCompile = true,
                     CanTest = true
-                }
+                },
             };
             var baseDirectory = Path.GetDirectoryName(Path.GetFullPath(slnFilePath));
             if (baseDirectory != null)
@@ -91,6 +104,8 @@ internal partial class WorkspaceBuildTargetsHandler
                 }))
             .ToArray();
         list.AddRange(ProjectsToBuildTargets(projects));
+
+        // load targets from LaunchSettings
         var projectRootPaths = projects.Select(x => x.DirectoryPath);
         list.AddRange(GetLaunchSettingsProfilesAsBuildTargets(projectRootPaths, logger));
 
@@ -143,7 +158,6 @@ internal partial class WorkspaceBuildTargetsHandler
             var canRun = project.IsRunnableProject();
             var canTest = project.IsTestProject();
             var tags = new List<BuildTargetTag>();
-            //TODO: mark Libraries with BuildTargetTag.Library tag
             if (canRun) {
                 if (canTest)
                 {
@@ -158,6 +172,15 @@ internal partial class WorkspaceBuildTargetsHandler
                 tags.Add(BuildTargetTag.Library);
             }
 
+            var dependencies = project.GetProjectReferences()
+                .Select(x => 
+                    new BuildTargetIdentifier
+                    {
+                        Uri = UriFixer.WithFileSchema(x)
+                    })
+                .ToList()
+                .AsReadOnly();
+
             var buildTarget = new BuildTarget
             {
                 Id = new BuildTargetIdentifier
@@ -166,6 +189,7 @@ internal partial class WorkspaceBuildTargetsHandler
                 },
                 DisplayName = Path.GetFileName(project.FullPath),
                 LanguageIds = new[] { LanguageId.Csharp },
+                Dependencies = dependencies,
                 Capabilities = new BuildTargetCapabilities
                 {
                     CanCompile = true,

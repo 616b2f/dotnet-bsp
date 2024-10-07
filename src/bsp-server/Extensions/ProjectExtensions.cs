@@ -22,4 +22,12 @@ public static class ProjectExtensions
         var outputType = project.GetProperty("OutputType");
         return outputType?.EvaluatedValue.Equals("Library", StringComparison.OrdinalIgnoreCase) ?? true;
     }
+
+    public static IEnumerable<string> GetProjectReferences(this Project project)
+    {
+        var items = project.GetItems("ProjectReference");
+
+        return items.Select(x =>
+            Path.GetFullPath(Path.Combine(project.DirectoryPath, x.EvaluatedInclude)));
+    }
 }
