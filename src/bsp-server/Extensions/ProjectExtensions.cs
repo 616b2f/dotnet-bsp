@@ -16,4 +16,10 @@ public static class ProjectExtensions
         var outputType = project.GetProperty("OutputType");
         return outputType?.EvaluatedValue.Equals("Exe", StringComparison.OrdinalIgnoreCase) ?? true;
     }
+
+    public static bool IsLibraryProject(this Project project)
+    {
+        var outputType = project.GetProperty("OutputType");
+        return outputType?.EvaluatedValue.Equals("Library", StringComparison.OrdinalIgnoreCase) ?? true;
+    }
 }

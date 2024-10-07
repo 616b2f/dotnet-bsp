@@ -153,6 +153,11 @@ internal partial class WorkspaceBuildTargetsHandler
                 }
             }
 
+            if (project.IsLibraryProject())
+            {
+                tags.Add(BuildTargetTag.Library);
+            }
+
             var buildTarget = new BuildTarget
             {
                 Id = new BuildTargetIdentifier
