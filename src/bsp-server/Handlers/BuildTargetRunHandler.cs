@@ -32,7 +32,7 @@ internal class BuildTargetRunHandler
         if (initParams.RootUri.IsFile)
         {
             var projects = new ProjectCollection();
-            var target = runParams.Target.Uri.ToString();
+            var target = runParams.Target.ToString();
             var fileExtension = Path.GetExtension(target);
             if (TryGetLaunchProfile(target, out string launchProfileName, out string launchSettingsFile))
             {
