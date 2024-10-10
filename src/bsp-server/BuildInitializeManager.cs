@@ -17,8 +17,9 @@ internal class BuildInitializeManager : IInitializeManager<InitializeBuildParams
         var serverCapabilities = new BuildServerCapabilities()
         {
             CompileProvider = new CompileProvider { LanguageIds = { LanguageId.Csharp } },
-            // RunProvider = new RunProvider { LanguageIds = { LanguageId.Csharp } },
-            // TestProvider = new TestProvider { LanguageIds = { LanguageId.Csharp } },
+            RunProvider = new RunProvider { LanguageIds = { LanguageId.Csharp } },
+            TestProvider = new TestProvider { LanguageIds = { LanguageId.Csharp } },
+            TestCaseDiscoveryProvider = new TestCaseDiscoveryProvider { LanguageIds = { LanguageId.Csharp } }
             // DebugProvider = new DebugProvider { LanguageIds = { LanguageId.Csharp } },
         };
 

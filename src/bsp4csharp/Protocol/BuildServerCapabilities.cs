@@ -26,6 +26,13 @@ public class BuildServerCapabilities
     public TestProvider? TestProvider { get; set; }
 
     /// <summary>
+    /// The languages the server supports test case discovery via method buildTarget/testCaseDiscovery. 
+    /// </summary>
+    [DataMember(Name = "testCaseDiscoveryProvider")]
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+    public TestCaseDiscoveryProvider? TestCaseDiscoveryProvider { get; set; }
+
+    /// <summary>
     /// The languages the server supports run via method buildTarget/run. 
     /// </summary>
     [DataMember(Name = "runProvider")]
@@ -88,6 +95,13 @@ public class BuildServerCapabilities
     public bool? BuildTargetChangedProvider { get; set; }
 
     /// <summary>
+    /// Reloading the build state through workspace/reload is supported 
+    /// </summary>
+    [DataMember(Name = "canReload")]
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+    public bool? CanReload { get; set; }
+
+    /// <summary>
     /// The server can respond to `buildTarget/jvmRunEnvironment` requests with the
     /// necessary information required to launch a Java process to run a main class. 
     /// </summary>
@@ -109,11 +123,4 @@ public class BuildServerCapabilities
     [DataMember(Name = "cargoFeaturesProvider")]
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public bool? CargoFeaturesProvider { get; set; }
-
-    /// <summary>
-    /// Reloading the build state through workspace/reload is supported 
-    /// </summary>
-    [DataMember(Name = "canReload")]
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public bool? CanReload { get; set; }
 }

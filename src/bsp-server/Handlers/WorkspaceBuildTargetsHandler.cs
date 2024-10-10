@@ -64,6 +64,7 @@ internal partial class WorkspaceBuildTargetsHandler
                 },
                 DisplayName = Path.GetFileName(slnFilePath),
                 Dependencies = dependencies,
+                LanguageIds = [LanguageId.Csharp],
                 Capabilities = new BuildTargetCapabilities
                 {
                     CanCompile = true,
@@ -188,7 +189,7 @@ internal partial class WorkspaceBuildTargetsHandler
                     Uri = UriFixer.WithFileSchema(project.FullPath)
                 },
                 DisplayName = Path.GetFileName(project.FullPath),
-                LanguageIds = new[] { LanguageId.Csharp },
+                LanguageIds = [LanguageId.Csharp],
                 Dependencies = dependencies,
                 Capabilities = new BuildTargetCapabilities
                 {
