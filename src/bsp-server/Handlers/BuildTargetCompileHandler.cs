@@ -1,8 +1,8 @@
 using BaseProtocol;
 using bsp4csharp.Protocol;
-using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 using dotnet_bsp.Logging;
+using Microsoft.Build.Graph;
 
 namespace dotnet_bsp.Handlers;
 
@@ -27,57 +27,31 @@ internal class BuildTargetCompileHandler
     {
         var projects = new ProjectCollection();
         var buildResult = false;
-        foreach (var target in compileParams.Targets)
-        {
-            var fileExtension = Path.GetExtension(target.ToString());
-            context.Logger.LogInformation("Target file extension {}", fileExtension);
-            if (fileExtension == ".sln")
-            {
-                var slnFile = SolutionFile.Parse(target.ToString());
-
-                var configurationName = slnFile.GetDefaultConfigurationName();
-                var platformName = slnFile.GetDefaultPlatformName();
-                if (string.Equals(platformName, "Any CPU", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    platformName = "AnyCpu";
-                }
-
-                context.Logger.LogInformation("use platformName: {}", platformName);
-                context.Logger.LogInformation("use configurationName: {}", configurationName);
-                var projectFilesInSln = slnFile.ProjectsInOrder
-                    .Where(x => 
-                        (x.ProjectType == SolutionProjectType.KnownToBeMSBuildFormat ||
-                        x.ProjectType == SolutionProjectType.WebProject) &&
-                        // and only projects that has the build flag enabled for the provided configuration
-                        x.ProjectConfigurations.Values.Any(v =>
-                            v.ConfigurationName.Equals(configurationName, StringComparison.InvariantCultureIgnoreCase) &&
-                            v.PlatformName.Equals(platformName, StringComparison.InvariantCultureIgnoreCase) &&
-                            v.IncludeInBuild)
-                        )
-                    .Select(x => x.AbsolutePath);
-
-                foreach (var projectFile in projectFilesInSln)
-                {
-                    projects.LoadProject(projectFile);
-                }
-            }
-            else if (fileExtension == ".csproj")
-            {
-                projects.LoadProject(target.ToString());
-            }
-        }
-
+        var targetFiles = compileParams.Targets.Select(x => x.ToString());
+        var graph = new ProjectGraph(targetFiles, projects);
         var initParams = _capabilitiesManager.GetInitializeParams();
         if (initParams.RootUri.IsFile)
         {
             var workspacePath = initParams.RootUri.AbsolutePath;
             context.Logger.LogInformation("GetLoadedProjects from {}", workspacePath);
             _baseProtocolClientManager.SendClearDiagnosticsMessage();
-            foreach (var proj in projects.LoadedProjects)
+
+            foreach (var proj in graph.ProjectNodesTopologicallySorted)
             {
-                context.Logger.LogInformation("Start building target: {}", proj.FullPath);
-                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, compileParams.OriginId, workspacePath, proj.FullPath);
-                buildResult |= proj.Build(["Restore", "Rebuild"], new [] {msBuildLogger});
+                var globalProps = proj.ProjectInstance.GlobalProperties
+                    .Select(x => string.Format("{0}={1}", x.Key, x.Value))
+                    .ToArray();
+                context.Logger.LogInformation("Global Properties: {}", string.Join("\n", globalProps));
+                context.Logger.LogInformation("Start restore target: {}", proj.ProjectInstance.FullPath);
+                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, compileParams.OriginId, workspacePath, proj.ProjectInstance.FullPath);
+                buildResult |= proj.ProjectInstance.Build(["Restore"], new [] {msBuildLogger});
+            }
+
+            foreach (var proj in graph.ProjectNodesTopologicallySorted)
+            {
+                context.Logger.LogInformation("Start building target: {}", proj.ProjectInstance.FullPath);
+                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, compileParams.OriginId, workspacePath, proj.ProjectInstance.FullPath);
+                buildResult |= proj.ProjectInstance.Build(["Build"], new [] {msBuildLogger});
             }
         }
 
