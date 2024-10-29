@@ -46,11 +46,6 @@ internal sealed class BuildServerHost
     {
         _jsonRpc.StartListening();
 
-        using (var logScope = _logger.BeginScope<BuildServerHost>(this))
-        {
-            _logger.LogInformation("BuildServerHost started");
-        }
-
         // Now that the server is started, update the our instance reference
         Instance = this;
     }
