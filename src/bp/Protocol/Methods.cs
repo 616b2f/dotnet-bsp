@@ -3,7 +3,7 @@ namespace BaseProtocol.Protocol;
 /// <summary>
 /// Class which contains the string values for all common build server protocol methods.
 /// </summary>
-internal static class Methods
+public static class Methods
 {
   // client requests
   public const string Initialize = "initialize";

@@ -1,6 +1,5 @@
 namespace BaseProtocol.Protocol
 {
-    using System;
     using System.ComponentModel;
     using System.Runtime.Serialization;
     using Newtonsoft.Json;
@@ -11,7 +10,7 @@ namespace BaseProtocol.Protocol
     /// See the <see href="https://microsoft.github.io/language-server-protocol/specifications/specification-current/#initializeParams">Language Server Protocol specification</see> for additional information.
     /// </summary>
     [DataContract]
-    internal class InitializeParams : IWorkDoneProgressParams
+    public class InitializeParams : IWorkDoneProgressParams
     {
         /// <summary>
         /// Gets or sets the ID of the process which launched the language server.
@@ -93,7 +92,7 @@ namespace BaseProtocol.Protocol
     /// See the <see href="https://microsoft.github.io/language-server-protocol/specifications/specification-current/#initializeResult">Language Server Protocol specification</see> for additional information.
     /// </summary>
     [DataContract]
-    internal class InitializeResult
+    public class InitializeResult
     {
         /// <summary>
         /// Gets or sets the server capabilities.

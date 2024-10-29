@@ -10,7 +10,7 @@ namespace BaseProtocol.Protocol
     /// </summary>
     [JsonConverter(typeof(StringEnumConverter<TraceSetting>))]
     [TypeConverter(typeof(StringEnumConverter<TraceSetting>.TypeConverter))]
-    internal readonly record struct TraceSetting(string Value) : IStringEnum
+    public readonly record struct TraceSetting(string Value) : IStringEnum
     {
         /// <summary>
         /// Setting for 'off'.
@@ -28,4 +28,3 @@ namespace BaseProtocol.Protocol
         public static readonly TraceSetting Verbose = new("verbose");
     }
 }
-

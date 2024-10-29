@@ -3,6 +3,7 @@ using BaseProtocol.Protocol;
 using bsp4csharp.Protocol;
 using Microsoft.Build.Framework;
 using Newtonsoft.Json;
+using Methods = bsp4csharp.Protocol.Methods;
 
 namespace dotnet_bsp.Logging
 {
@@ -11,11 +12,13 @@ namespace dotnet_bsp.Logging
         private readonly IBaseProtocolClientManager _baseProtocolClientManager;
         private readonly string _workspacePath;
         private readonly string _buildTarget;
+        private readonly string _taskId;
         private readonly string? _originId;
         private readonly ICollection<string> _diagnosticKeysCollection = [];
         private int Warnings = 0;
         private int Errors = 0;
         private DateTime _buildStartTimestamp;
+        private string[] _targetsOfInterest = ["Clean", "Build", "Restore"];
 
         public MSBuildLogger(BaseProtocol.IBaseProtocolClientManager baseProtocolClientManager, string? originId, string workspacePath, string buildTarget)
         {
@@ -23,6 +26,7 @@ namespace dotnet_bsp.Logging
             _originId = originId;
             _workspacePath = workspacePath;
             _buildTarget = buildTarget;
+            _taskId = Guid.NewGuid().ToString();
             Parameters = string.Empty;
         }
 
@@ -32,10 +36,13 @@ namespace dotnet_bsp.Logging
 
         public void Initialize(IEventSource eventSource)
         {
-            eventSource.BuildStarted += BuildStarted;
-            eventSource.BuildFinished += BuildFinished;
-            eventSource.ProjectStarted += ProjectStarted;
-            eventSource.ProjectFinished += ProjectFinished;
+            // eventSource.BuildStarted += BuildStarted;
+            // eventSource.BuildFinished += BuildFinished;
+            // eventSource.ProjectStarted += ProjectStarted;
+            // eventSource.ProjectFinished += ProjectFinished;
+
+            eventSource.TargetStarted += TargetStarted;
+            eventSource.TargetFinished += TargetFinished;
 
             eventSource.TaskStarted += TaskStartedRaised;
             eventSource.TaskFinished += TaskFinishedRaised;
@@ -45,14 +52,80 @@ namespace dotnet_bsp.Logging
             eventSource.ErrorRaised += ErrorRaised;
         }
 
+        private void TargetStarted(object sender, TargetStartedEventArgs e)
+        {
+            if (_targetsOfInterest.Contains(e.TargetName, StringComparer.InvariantCultureIgnoreCase) &&
+                e.BuildReason == TargetBuiltReason.None)
+            {
+                var taskId = new TaskId { Id = e.ProjectFile + "#" + e.TargetName + "#" + e.ThreadId };
+                var taskStartParams = new TaskStartParams
+                {
+                    TaskId = taskId,
+                    OriginId = _originId,
+                    Message = $"[{e.TargetName}]: {e.ProjectFile}",
+                    EventTime = e.Timestamp.Millisecond,
+                    DataKind = TaskStartDataKind.CompileTask,
+                    Data = new CompileTask
+                    {
+                        Target = new BuildTargetIdentifier { Uri = UriFixer.WithFileSchema(e.ProjectFile) }
+                    }
+                };
+                _ = _baseProtocolClientManager.SendNotificationAsync(
+                    Methods.BuildTaskStart, taskStartParams, CancellationToken.None);
+
+                var logMessgeParams = new LogMessageParams
+                {
+                    Message = e.Message,
+                    MessageType = MessageType.Debug
+                };
+                _ = _baseProtocolClientManager.SendNotificationAsync(
+                    Methods.BuildLogMessage, logMessgeParams, CancellationToken.None);
+            }
+        }
+
+        private void TargetFinished(object sender, TargetFinishedEventArgs e)
+        {
+            if (_targetsOfInterest.Contains(e.TargetName, StringComparer.InvariantCultureIgnoreCase))
+            {
+                var taskId = new TaskId { Id = e.ProjectFile + "#" + e.TargetName + "#" + e.ThreadId };
+                var taskFinishParams = new TaskFinishParams
+                {
+                    TaskId = taskId,
+                    OriginId = _originId,
+                    Message = $"[{e.TargetName}]: {e.ProjectFile}",
+                    EventTime = e.Timestamp.Millisecond,
+                    Status = e.Succeeded ? StatusCode.Ok : StatusCode.Error,
+                    DataKind = TaskFinishDataKind.CompileReport,
+                    Data = new CompileReport
+                    {
+                        Target = new BuildTargetIdentifier { Uri = UriFixer.WithFileSchema(e.ProjectFile) },
+                        Warnings = Warnings,
+                        Errors = Errors,
+                        Time = Convert.ToInt64((e.Timestamp - _buildStartTimestamp).TotalMilliseconds),
+                    }
+                };
+                var _ = _baseProtocolClientManager.SendNotificationAsync(
+                    Methods.BuildTaskFinish, taskFinishParams, CancellationToken.None);
+
+                var logMessgeParams = new LogMessageParams
+                {
+                    Message = e.Message,
+                    MessageType = MessageType.Debug
+                };
+                _ = _baseProtocolClientManager.SendNotificationAsync(
+                    Methods.BuildLogMessage, logMessgeParams, CancellationToken.None);
+            }
+        }
+
+
         private void BuildStarted(object sender, BuildStartedEventArgs e)
         {
-            var taskId = new TaskId { Id = _buildTarget + "#" + e.ThreadId };
+            var taskId = new TaskId { Id = _taskId };
             var taskStartParams = new TaskStartParams
             {
                 TaskId = taskId,
                 OriginId = _originId,
-                Message = e.Message,
+                Message = e.Message + ": " + _buildTarget,
                 EventTime = e.Timestamp.Millisecond,
                 DataKind = TaskStartDataKind.CompileTask,
                 Data = new CompileTask
@@ -77,12 +150,12 @@ namespace dotnet_bsp.Logging
 
         private void BuildFinished(object sender, BuildFinishedEventArgs e)
         {
-            var taskId = new TaskId { Id = _buildTarget + "#" + e.ThreadId };
+            var taskId = new TaskId { Id = _taskId };
             var taskFinishParams = new TaskFinishParams
             {
                 TaskId = taskId,
                 OriginId = _originId,
-                Message = e.Message,
+                Message = e.Message + ": " + _buildTarget,
                 EventTime = e.Timestamp.Millisecond,
                 Status = e.Succeeded ? StatusCode.Ok : StatusCode.Error,
                 DataKind = TaskFinishDataKind.CompileReport,

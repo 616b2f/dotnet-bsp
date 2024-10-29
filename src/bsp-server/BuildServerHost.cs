@@ -4,8 +4,10 @@ using dotnet_bsp;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using StreamJsonRpc;
+using System.Runtime.CompilerServices;
 
 #pragma warning disable CA1001 // The JsonRpc instance is disposed of by the AbstractLanguageServer during shutdown
+[assembly: InternalsVisibleTo("bsp-server.tests")]
 internal sealed class BuildServerHost
 #pragma warning restore CA1001 // The JsonRpc instance is disposed of by the AbstractLanguageServer during shutdown
 {
@@ -43,6 +45,11 @@ internal sealed class BuildServerHost
     public void Start()
     {
         _jsonRpc.StartListening();
+
+        using (var logScope = _logger.BeginScope<BuildServerHost>(this))
+        {
+            _logger.LogInformation("BuildServerHost started");
+        }
 
         // Now that the server is started, update the our instance reference
         Instance = this;
