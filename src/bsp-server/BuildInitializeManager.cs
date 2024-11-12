@@ -36,11 +36,42 @@ internal class BuildInitializeManager : IInitializeManager<InitializeBuildParams
 
     public InitializeBuildParams GetInitializeParams()
     {
-        if (_initializeParams is null)
+        EnsureInitialize();
+
+        return _initializeParams!;
+    }
+
+    public void EnsureInitialize()
+    {
+        _ = _initializeParams ?? throw new ServerNotInitializedException("Server not Initialized");
+    }
+
+    private bool _initialized = false;
+    public bool Initialized
+    {
+        private get
         {
-            throw new ArgumentNullException(nameof(_initializeParams));
+            return _initialized;
         }
 
-        return _initializeParams;
+        set
+        {
+            if (_initialized is true)
+            {
+                throw new InvalidOperationException("initialized was called twice");
+            }
+
+            _initialized = value;
+        }
+    }
+
+    public void EnsureInitialized()
+    {
+        EnsureInitialize();
+
+        if (!Initialized)
+        {
+            throw new ServerNotInitializedException("Client did not send Initialized notification");
+        }
     }
 }

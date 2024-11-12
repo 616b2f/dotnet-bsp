@@ -10,18 +10,20 @@ namespace dotnet_bsp.Handlers;
 internal partial class WorkspaceBuildTargetsHandler
     : IRequestHandler<WorkspaceBuildTargetsResult, RequestContext>
 {
-    private readonly IInitializeManager<InitializeBuildParams, InitializeBuildResult> _capabilitiesManager;
-    public WorkspaceBuildTargetsHandler(IInitializeManager<InitializeBuildParams, InitializeBuildResult> capabilitiesManager)
+    private readonly BuildInitializeManager _initializeManager;
+    public WorkspaceBuildTargetsHandler(BuildInitializeManager initializeManager)
     {
-        _capabilitiesManager = capabilitiesManager;
+        _initializeManager = initializeManager;
     }
 
     public bool MutatesSolutionState => false;
 
     public Task<WorkspaceBuildTargetsResult> HandleRequestAsync(RequestContext context, CancellationToken cancellationToken)
     {
+        _initializeManager.EnsureInitialized();
+
         var list = new List<BuildTarget>();
-        var initParams = _capabilitiesManager.GetInitializeParams();
+        var initParams = _initializeManager.GetInitializeParams();
         if (initParams.RootUri.IsFile)
         {
             var workspacePath = initParams.RootUri.AbsolutePath;

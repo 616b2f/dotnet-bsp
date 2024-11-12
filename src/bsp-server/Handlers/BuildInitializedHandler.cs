@@ -6,18 +6,20 @@ namespace dotnet_bsp.Handlers;
 [BaseProtocolServerEndpoint("build/initialized")]
 internal class BuildInitializedHandler : INotificationHandler<InitializedBuildParams, RequestContext>
 {
-    private bool HasBeenInitialized = false;
+    private readonly BuildInitializeManager _initializeManager;
+
+    public BuildInitializedHandler(BuildInitializeManager initializeManager)
+    {
+        this._initializeManager = initializeManager;
+    }
 
     public bool MutatesSolutionState => true;
 
     public Task HandleNotificationAsync(InitializedBuildParams request, RequestContext requestContext, CancellationToken cancellationToken)
     {
-        if (HasBeenInitialized)
-        {
-            throw new InvalidOperationException("initialized was called twice");
-        }
+        _initializeManager.EnsureInitialize();
 
-        HasBeenInitialized = true;
+        _initializeManager.Initialized = true;
 
         return Task.CompletedTask;
     }

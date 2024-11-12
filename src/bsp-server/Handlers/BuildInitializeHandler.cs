@@ -8,14 +8,14 @@ namespace dotnet_bsp.Handlers;
 internal class BuildInitializeHandler
     : IRequestHandler<InitializeBuildParams, InitializeBuildResult, RequestContext>
 {
-    private readonly IInitializeManager<InitializeBuildParams, InitializeBuildResult> _capabilitiesManager;
+    private readonly BuildInitializeManager _initializeManager;
     private readonly IBaseProtocolClientManager _baseProtocolClientManager;
 
     public BuildInitializeHandler(
-        IInitializeManager<InitializeBuildParams, InitializeBuildResult> capabilitiesManager,
+        BuildInitializeManager initializeManager,
         IBaseProtocolClientManager baseProtocolClientManager)
     {
-        _capabilitiesManager = capabilitiesManager;
+        _initializeManager = initializeManager;
         _baseProtocolClientManager = baseProtocolClientManager;
     }
 
@@ -23,14 +23,13 @@ internal class BuildInitializeHandler
 
     public Task<InitializeBuildResult> HandleRequestAsync(InitializeBuildParams request, RequestContext context, CancellationToken cancellationToken)
     {
-        _capabilitiesManager.SetInitializeParams(request);
-
+        _initializeManager.SetInitializeParams(request);
 
         // this has to be loaded before we try to use any Microsoft.Build.* references
         var msBuildInstance = MSBuildLocator.RegisterDefaults();
         context.Logger.LogInformation("MSBuild instance used: {}", msBuildInstance.MSBuildPath);
 
-        var serverCapabilities = _capabilitiesManager.GetInitializeResult();
+        var serverCapabilities = _initializeManager.GetInitializeResult();
 
         return Task.FromResult(serverCapabilities);
     }

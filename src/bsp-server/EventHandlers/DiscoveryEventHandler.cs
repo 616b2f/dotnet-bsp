@@ -4,7 +4,7 @@ using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using bsp4csharp.Protocol;
 using BaseProtocol;
 
-namespace dotnet_bsp.Handlers;
+namespace dotnet_bsp.EventHandlers;
 
 public class TestDiscoveryEventHandler : ITestDiscoveryEventsHandler
 {

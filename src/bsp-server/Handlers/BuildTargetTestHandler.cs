@@ -8,7 +8,7 @@ using Microsoft.TestPlatform.VsTestConsole.TranslationLayer.Interfaces;
 using TestResult = bsp4csharp.Protocol.TestResult;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
 using Newtonsoft.Json.Linq;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel;
+using dotnet_bsp.EventHandlers;
 
 namespace dotnet_bsp.Handlers;
 
@@ -16,14 +16,14 @@ namespace dotnet_bsp.Handlers;
 internal partial class BuildTargetTestHandler
     : IRequestHandler<TestParams, TestResult, RequestContext>
 {
-    private readonly IInitializeManager<InitializeBuildParams, InitializeBuildResult> _capabilitiesManager;
+    private readonly BuildInitializeManager _initializeManager;
     private readonly IBaseProtocolClientManager _baseProtocolClientManager;
 
     public BuildTargetTestHandler(
-        IInitializeManager<InitializeBuildParams, InitializeBuildResult> capabilitiesManager,
+        BuildInitializeManager initializeManager,
         IBaseProtocolClientManager baseProtocolClientManager)
     {
-        _capabilitiesManager = capabilitiesManager;
+        _initializeManager = initializeManager;
         _baseProtocolClientManager = baseProtocolClientManager;
     }
 
@@ -31,8 +31,10 @@ internal partial class BuildTargetTestHandler
 
     public Task<TestResult> HandleRequestAsync(TestParams testParams, RequestContext context, CancellationToken cancellationToken)
     {
+        _initializeManager.EnsureInitialized();
+
         var testResult = true;
-        var initParams = _capabilitiesManager.GetInitializeParams();
+        var initParams = _initializeManager.GetInitializeParams();
         var projectTargets = new Dictionary<string, List<string>>();
         if (initParams.RootUri.IsFile)
         {

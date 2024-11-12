@@ -1,12 +1,11 @@
 using bsp4csharp.Protocol;
-using Microsoft.Extensions.Logging;
-using Nerdbank.Streams;
+using dotnet_bsp;
 using StreamJsonRpc;
 using Xunit.Abstractions;
 
 namespace test;
 
-public class UnitTests
+public partial class UnitTests
 {
     private readonly ITestOutputHelper outputHelper;
 
@@ -16,7 +15,43 @@ public class UnitTests
     }
 
     [Fact]
-    public async Task InitializeBuildRequest_Success()
+    public async Task RequestInitializeBuild_Success()
+    {
+        // Arrange
+        var testlogger = new UnitTestLogger(outputHelper);
+        var buildServer = BuildServerFactory.CreateServer(testlogger);
+        var client = buildServer.CreateClient();
+
+        var cancelationTokenSource = new CancellationTokenSource();
+        var initParams = new InitializeBuildParams
+        {
+            DisplayName = "TestClient",
+            Version = "1.0.0",
+            BspVersion = "2.1.1",
+            RootUri = UriFixer.WithFileSchema(TestProjectPath.AspnetExample),
+            Capabilities = new BuildClientCapabilities()
+        };
+        initParams.Capabilities.LanguageIds.Add("csharp");
+
+        // Act
+        var initResult = await client.SendRequestAsync<InitializeBuildParams, InitializeBuildResult>(Methods.BuildInitialize, initParams, cancelationTokenSource.Token);
+
+        // Assert
+        Assert.Equal("dotnet-bsp", initResult.DisplayName);
+        Assert.Equal("2.1.1", initResult.BspVersion);
+        Assert.Equal("0.0.1", initResult.Version);
+        Assert.NotNull(initResult.Capabilities.CompileProvider);
+        Assert.Contains("csharp", initResult.Capabilities.CompileProvider.LanguageIds);
+        Assert.NotNull(initResult.Capabilities.RunProvider);
+        Assert.Contains("csharp", initResult.Capabilities.RunProvider.LanguageIds);
+        Assert.NotNull(initResult.Capabilities.TestProvider);
+        Assert.Contains("csharp", initResult.Capabilities.TestProvider.LanguageIds);
+        Assert.NotNull(initResult.Capabilities.TestCaseDiscoveryProvider);
+        Assert.Contains("csharp", initResult.Capabilities.TestCaseDiscoveryProvider.LanguageIds);
+    }
+
+    [Fact]
+    public async Task RequestWorkspaceBuildTargets_AfterInitialize_Success()
     {
         // // Arrange
         var testlogger = new UnitTestLogger(outputHelper);
@@ -29,46 +64,83 @@ public class UnitTests
             DisplayName = "TestClient",
             Version = "1.0.0",
             BspVersion = "2.1.1",
-            RootUri = new Uri("/home/ak/devel/aspnet-example/"),
+            RootUri = UriFixer.WithFileSchema(TestProjectPath.AspnetExample),
             Capabilities = new BuildClientCapabilities()
         };
         initParams.Capabilities.LanguageIds.Add("csharp");
 
-        // Act
         var initResult = await client.SendRequestAsync<InitializeBuildParams, InitializeBuildResult>(Methods.BuildInitialize, initParams, cancelationTokenSource.Token);
 
+        Assert.NotNull(initResult);
+
+        var initializedParams = new InitializedBuildParams();
+        await client.SendNotificationAsync<InitializedBuildParams>(Methods.BuildInitialized, initializedParams);
+
+        Thread.Sleep(TimeSpan.FromSeconds(3));
+
+        // Act
+        var result = await client.SendRequestAsync<WorkspaceBuildTargetsResult>(Methods.WorkspaceBuildTargets, cancelationTokenSource.Token);
+
         // Assert
-        Assert.Equal("dotnet-bsp", initResult.DisplayName);
+        Assert.NotNull(result);
+        Assert.Equal(6, result.Targets.Count);
     }
 
     [Fact]
-    public void Test2()
+    public async Task Requests_BeforeInitializeBuildRequest_ShouldFail()
     {
-        Assert.True(true);
-    }
-}
+        // // Arrange
+        var testlogger = new UnitTestLogger(outputHelper);
+        var buildServer = BuildServerFactory.CreateServer(testlogger);
+        var client = buildServer.CreateClient();
 
-public class UnitTestLogger: ILogger
-{
-    private readonly ITestOutputHelper outputHelper;
+        var cancelationTokenSource = new CancellationTokenSource();
 
-    public UnitTestLogger(ITestOutputHelper outputHelper)
-    {
-        this.outputHelper = outputHelper;
-    }
+        // Act
+        var act = () => client.SendRequestAsync<WorkspaceBuildTargetsResult>(Methods.WorkspaceBuildTargets, cancelationTokenSource.Token);
 
-    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
-    {
-        return null;
-    }
+        // Assert
+        var exception = await Assert.ThrowsAsync<RemoteInvocationException>(act);
 
-    public bool IsEnabled(LogLevel logLevel)
-    {
-        return true;
+        Assert.Multiple(() =>
+        {
+            Assert.Equal("Server not Initialized", exception.Message);
+            Assert.Equal(-32002, exception.ErrorCode); // ServerNotInitialized
+        });
     }
 
-    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+    [Fact]
+    public async Task Requests_BeforeInitializedBuildNotification_ShouldFail()
     {
-        outputHelper.WriteLine(string.Format("LogLevel: {0}, LogMessage: {1}", logLevel, formatter(state, exception)));
+        // // Arrange
+        var testlogger = new UnitTestLogger(outputHelper);
+        var buildServer = BuildServerFactory.CreateServer(testlogger);
+        var client = buildServer.CreateClient();
+
+        var cancelationTokenSource = new CancellationTokenSource();
+
+        var initParams = new InitializeBuildParams
+        {
+            DisplayName = "TestClient",
+            Version = "1.0.0",
+            BspVersion = "2.1.1",
+            RootUri = UriFixer.WithFileSchema(TestProjectPath.AspnetExample),
+            Capabilities = new BuildClientCapabilities()
+        };
+        initParams.Capabilities.LanguageIds.Add("csharp");
+
+        var initResult = await client.SendRequestAsync<InitializeBuildParams, InitializeBuildResult>(Methods.BuildInitialize, initParams, cancelationTokenSource.Token);
+
+        // Act
+        var act = () => client.SendRequestAsync<WorkspaceBuildTargetsResult>(Methods.WorkspaceBuildTargets, cancelationTokenSource.Token);
+
+        // Assert
+        var exception = await Assert.ThrowsAsync<RemoteInvocationException>(act);
+
+        Assert.Multiple(() =>
+        {
+            Assert.Equal(-32002, exception.ErrorCode); // ServerNotInitialized
+            Assert.Equal("Client did not send Initialized notification", exception.Message);
+        });
     }
 }

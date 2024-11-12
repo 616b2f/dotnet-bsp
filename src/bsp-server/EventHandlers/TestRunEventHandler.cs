@@ -5,7 +5,7 @@ using BaseProtocol;
 using bsp4csharp.Protocol;
 using System.Collections.ObjectModel;
 
-namespace dotnet_bsp.Handlers;
+namespace dotnet_bsp.EventHandlers;
 
 public class TestRunEventHandler : ITestRunEventsHandler
 {

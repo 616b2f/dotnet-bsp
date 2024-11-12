@@ -10,14 +10,14 @@ namespace dotnet_bsp.Handlers;
 internal class BuildTargetCompileHandler
     : IRequestHandler<CompileParams, CompileResult, RequestContext>
 {
-    private readonly IInitializeManager<InitializeBuildParams, InitializeBuildResult> _capabilitiesManager;
+    private readonly BuildInitializeManager _initializeManager;
     private readonly IBaseProtocolClientManager _baseProtocolClientManager;
 
     public BuildTargetCompileHandler(
-        IInitializeManager<InitializeBuildParams, InitializeBuildResult> capabilitiesManager,
+        BuildInitializeManager initializeManager,
         IBaseProtocolClientManager baseProtocolClientManager)
     {
-        _capabilitiesManager = capabilitiesManager;
+        _initializeManager = initializeManager;
         _baseProtocolClientManager = baseProtocolClientManager;
     }
 
@@ -25,11 +25,13 @@ internal class BuildTargetCompileHandler
 
     public Task<CompileResult> HandleRequestAsync(CompileParams compileParams, RequestContext context, CancellationToken cancellationToken)
     {
+        _initializeManager.EnsureInitialized();
+
         var projects = new ProjectCollection();
         var buildResult = false;
         var targetFiles = compileParams.Targets.Select(x => x.ToString());
         var graph = new ProjectGraph(targetFiles, projects);
-        var initParams = _capabilitiesManager.GetInitializeParams();
+        var initParams = _initializeManager.GetInitializeParams();
         if (initParams.RootUri.IsFile)
         {
             var workspacePath = initParams.RootUri.AbsolutePath;

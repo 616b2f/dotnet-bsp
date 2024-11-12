@@ -10,14 +10,14 @@ namespace dotnet_bsp.Handlers;
 internal class BuildTargetCleanCacheHandler
     : IRequestHandler<CleanCacheParams, CleanCacheResult, RequestContext>
 {
-    private readonly IInitializeManager<InitializeBuildParams, InitializeBuildResult> _capabilitiesManager;
+    private readonly BuildInitializeManager _initializeManager;
     private readonly IBaseProtocolClientManager _baseProtocolClientManager;
 
     public BuildTargetCleanCacheHandler(
-        IInitializeManager<InitializeBuildParams, InitializeBuildResult> capabilitiesManager,
+        BuildInitializeManager initializeManager,
         IBaseProtocolClientManager baseProtocolClientManager)
     {
-        _capabilitiesManager = capabilitiesManager;
+        _initializeManager = initializeManager;
         _baseProtocolClientManager = baseProtocolClientManager;
     }
 
@@ -25,8 +25,10 @@ internal class BuildTargetCleanCacheHandler
 
     public Task<CleanCacheResult> HandleRequestAsync(CleanCacheParams cleanCacheParams, RequestContext context, CancellationToken cancellationToken)
     {
+        _initializeManager.EnsureInitialized();
+
         var cleanResult = false;
-        var initParams = _capabilitiesManager.GetInitializeParams();
+        var initParams = _initializeManager.GetInitializeParams();
         if (initParams.RootUri.IsFile)
         {
             var projects = new ProjectCollection();

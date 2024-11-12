@@ -8,17 +8,19 @@ namespace dotnet_bsp.Handlers;
 internal class BuildTargetSourcesHandler
     : IRequestHandler<SourcesParams, SourcesResult, RequestContext>
 {
-    private readonly IInitializeManager<InitializeBuildParams, InitializeBuildResult> _capabilitiesManager;
+    private readonly BuildInitializeManager _initializeManager;
 
-    public BuildTargetSourcesHandler(IInitializeManager<InitializeBuildParams, InitializeBuildResult> capabilitiesManager)
+    public BuildTargetSourcesHandler(BuildInitializeManager initializeManager)
     {
-        _capabilitiesManager = capabilitiesManager;
+        _initializeManager = initializeManager;
     }
 
     public bool MutatesSolutionState => false;
 
     public Task<SourcesResult> HandleRequestAsync(SourcesParams sourcesParams, RequestContext context, CancellationToken cancellationToken)
     {
+        _initializeManager.EnsureInitialized();
+
         var items = new List<SourcesItem>();
         foreach (var target in sourcesParams.Targets)
         {

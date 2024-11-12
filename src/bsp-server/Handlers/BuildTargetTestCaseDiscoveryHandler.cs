@@ -5,6 +5,7 @@ using Microsoft.Build.Evaluation;
 using dotnet_bsp.Logging;
 using Microsoft.TestPlatform.VsTestConsole.TranslationLayer;
 using Microsoft.TestPlatform.VsTestConsole.TranslationLayer.Interfaces;
+using dotnet_bsp.EventHandlers;
 
 namespace dotnet_bsp.Handlers;
 
@@ -12,14 +13,14 @@ namespace dotnet_bsp.Handlers;
 internal partial class BuildTargetTestCaseDiscoveryHandler
     : IRequestHandler<TestCaseDiscoveryParams, TestCaseDiscoveryResult, RequestContext>
 {
-    private readonly IInitializeManager<InitializeBuildParams, InitializeBuildResult> _capabilitiesManager;
+    private readonly BuildInitializeManager _initializeManager;
     private readonly IBaseProtocolClientManager _baseProtocolClientManager;
 
     public BuildTargetTestCaseDiscoveryHandler(
-        IInitializeManager<InitializeBuildParams, InitializeBuildResult> capabilitiesManager,
+        BuildInitializeManager initializeManager,
         IBaseProtocolClientManager baseProtocolClientManager)
     {
-        _capabilitiesManager = capabilitiesManager;
+        _initializeManager = initializeManager;
         _baseProtocolClientManager = baseProtocolClientManager;
     }
 
@@ -27,8 +28,10 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
 
     public Task<TestCaseDiscoveryResult> HandleRequestAsync(TestCaseDiscoveryParams testCaseDiscoveryParams, RequestContext context, CancellationToken cancellationToken)
     {
+        _initializeManager.EnsureInitialized();
+
         var testCaseDiscoveryResult = true;
-        var initParams = _capabilitiesManager.GetInitializeParams();
+        var initParams = _initializeManager.GetInitializeParams();
         if (initParams.RootUri.IsFile)
         {
             var projects = new ProjectCollection();

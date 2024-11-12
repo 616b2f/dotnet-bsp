@@ -31,7 +31,7 @@ public class TestBuildServer
         serverStdin = clientOutputStream;
         serverStdout = clientInputStream;
 
-        var server = new BuildServerHost(serverInputStream, serverOutputStream, logger);
+        server = new BuildServerHost(serverInputStream, serverOutputStream, logger);
         server.Start();
     }
 
@@ -56,8 +56,14 @@ public class BuildServerClient
     }
 
     public Task<TResponse> SendRequestAsync<TParams, TResponse>(string methodName, TParams requestParameters, CancellationToken cancellationToken)
-        => _jsonRpc.InvokeWithParameterObjectAsync<TResponse>(methodName, requestParameters);
+        => _jsonRpc.InvokeWithParameterObjectAsync<TResponse>(methodName, requestParameters, cancellationToken);
 
+    public Task<TResponse> SendRequestAsync<TResponse>(string methodName, CancellationToken cancellationToken)
+        => _jsonRpc.InvokeWithParameterObjectAsync<TResponse>(methodName, cancellationToken: cancellationToken);
+        // => _jsonRpc.InvokeWithCancellationAsync<TResponse>(methodName, cancellationToken: cancellationToken);
+
+    public Task SendNotificationAsync<TParams>(string methodName, TParams notificationParams)
+        => _jsonRpc.NotifyAsync(methodName, notificationParams);
 
     // public const string BuildShowMessage = "build/showMessage";
     // public const string BuildLogMessage = "build/logMessage";

@@ -39,6 +39,7 @@ internal class BaseProtocolServer : AbstractBaseProtocolServer<RequestContext>
             .AddSingleton<IRequestContextFactory<RequestContext>>(_requestContextFactory)
             .AddSingleton<IHandlerProvider>(s => GetHandlerProvider())
             .AddSingleton<IInitializeManager<InitializeParams, InitializeResult>>(_initializeManager)
+            .AddSingleton(_initializeManager)
             .AddSingleton<ILifeCycleManager>(new BpServiceLifeCycleManager(baseProtocolClientManager))
             .AddSingleton(this);
 

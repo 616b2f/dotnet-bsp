@@ -50,7 +50,8 @@ public class BuildServer : AbstractBaseProtocolServer<RequestContext>
             .AddSingleton<IBpLogger>(_logger)
             .AddSingleton<IRequestContextFactory<RequestContext>, RequestContextFactory>()
             .AddSingleton<IHandlerProvider>(s => GetHandlerProvider())
-            .AddSingleton<IInitializeManager<InitializeBuildParams, InitializeBuildResult>, BuildInitializeManager>()
+            .AddSingleton<BuildInitializeManager>()
+            // .AddSingleton<IInitializeManager<InitializeBuildParams, InitializeBuildResult>, BuildInitializeManager>()
             .AddSingleton<ILifeCycleManager, BpServiceLifeCycleManager>()
             .AddSingleton(this);
 
