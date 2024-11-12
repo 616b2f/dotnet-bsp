@@ -1,6 +1,8 @@
+using dotnet_bsp;
 using Microsoft.Extensions.Logging;
 using Nerdbank.Streams;
 using StreamJsonRpc;
+using System.Diagnostics;
 using BspMethods = bsp4csharp.Protocol.Methods;
 
 namespace test;
@@ -22,17 +24,30 @@ public class TestBuildServer
     private BuildServerHost server;
     private Stream serverStdin;
     private Stream serverStdout;
+    private readonly Process _process;
 
     public TestBuildServer(ILogger logger)
     {
-        var (serverInputStream, clientOutputStream) = FullDuplexStream.CreatePair();
-        var (clientInputStream, serverOutputStream) = FullDuplexStream.CreatePair();
+        _process = new Process();
+        _process.StartInfo = new ProcessStartInfo(
+            "dotnet",
+            [
+                "exec",
+                Path.Combine(AppContext.BaseDirectory, "dotnet-bsp.dll"),
+                "--logLevel=Debug",
+                "--extensionLogDirectory",
+                "."
+            ])
+            {
+                CreateNoWindow = true,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+            };
 
-        serverStdin = clientOutputStream;
-        serverStdout = clientInputStream;
+        _process.Start();
 
-        server = new BuildServerHost(serverInputStream, serverOutputStream, logger);
-        server.Start();
+        serverStdin = _process.StandardInput.BaseStream;
+        serverStdout = _process.StandardOutput.BaseStream;
     }
 
     public BuildServerClient CreateClient()
@@ -43,6 +58,16 @@ public class TestBuildServer
     public Task WaitForExitAsync()
     {
         return server.WaitForExitAsync();
+    }
+
+    ~TestBuildServer()
+    {
+        if (!_process.HasExited)
+        {
+            _process.Kill(ProcessExtensions.SIGINT);
+        }
+
+        _process.Dispose();
     }
 }
 
