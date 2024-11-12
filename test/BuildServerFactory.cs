@@ -21,7 +21,6 @@ public class BuildServerFactory
 
 public class TestBuildServer
 {
-    private BuildServerHost server;
     private Stream serverStdin;
     private Stream serverStdout;
     private readonly Process _process;
@@ -57,7 +56,7 @@ public class TestBuildServer
 
     public Task WaitForExitAsync()
     {
-        return server.WaitForExitAsync();
+        return _process.WaitForExitAsync();
     }
 
     ~TestBuildServer()
