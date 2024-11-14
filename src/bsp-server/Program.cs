@@ -16,16 +16,17 @@ static async Task RunAsync(ServerConfiguration serverConfiguration, Cancellation
     // Create a console logger as a fallback to use before the LSP server starts.
     using var loggerFactory = LoggerFactory.Create(builder =>
     {
-        builder.SetMinimumLevel(serverConfiguration.MinimumLogLevel);
-        builder.AddProvider(new BspLogMessageLoggerProvider(fallbackLoggerFactory:
-            // Add a console logger as a fallback for when the LSP server has not finished initializing.
-            LoggerFactory.Create(builder =>
-            {
-                builder.SetMinimumLevel(serverConfiguration.MinimumLogLevel);
-                builder.AddConsole();
-                builder.AddSimpleConsole(formatterOptions => formatterOptions.ColorBehavior = LoggerColorBehavior.Disabled);
-            })
-        ));
+        builder
+            .SetMinimumLevel(serverConfiguration.MinimumLogLevel)
+            .AddProvider(new BspLogMessageLoggerProvider(fallbackLoggerFactory:
+                // Add a console logger as a fallback for when the LSP server has not finished initializing.
+                LoggerFactory.Create(builder =>
+                {
+                    builder.SetMinimumLevel(serverConfiguration.MinimumLogLevel);
+                    builder.AddConsole();
+                    builder.AddSimpleConsole(formatterOptions => formatterOptions.ColorBehavior = LoggerColorBehavior.Disabled);
+                })
+            ));
     });
 
     var logger = loggerFactory.CreateLogger<Program>();
