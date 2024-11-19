@@ -7,19 +7,13 @@ using dotnet_bsp.Logging;
 namespace dotnet_bsp.Handlers;
 
 [BaseProtocolServerEndpoint(Methods.BuildTargetCleanCache)]
-internal class BuildTargetCleanCacheHandler
-    : IRequestHandler<CleanCacheParams, CleanCacheResult, RequestContext>
+internal class BuildTargetCleanCacheHandler(
+    BuildInitializeManager initializeManager,
+    IBaseProtocolClientManager baseProtocolClientManager)
+        : IRequestHandler<CleanCacheParams, CleanCacheResult, RequestContext>
 {
-    private readonly BuildInitializeManager _initializeManager;
-    private readonly IBaseProtocolClientManager _baseProtocolClientManager;
-
-    public BuildTargetCleanCacheHandler(
-        BuildInitializeManager initializeManager,
-        IBaseProtocolClientManager baseProtocolClientManager)
-    {
-        _initializeManager = initializeManager;
-        _baseProtocolClientManager = baseProtocolClientManager;
-    }
+    private readonly BuildInitializeManager _initializeManager = initializeManager;
+    private readonly IBaseProtocolClientManager _baseProtocolClientManager = baseProtocolClientManager;
 
     public bool MutatesSolutionState => false;
 

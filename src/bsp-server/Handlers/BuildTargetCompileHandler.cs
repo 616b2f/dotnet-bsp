@@ -7,19 +7,13 @@ using Microsoft.Build.Graph;
 namespace dotnet_bsp.Handlers;
 
 [BaseProtocolServerEndpoint(Methods.BuildTargetCompile)]
-internal class BuildTargetCompileHandler
-    : IRequestHandler<CompileParams, CompileResult, RequestContext>
+internal class BuildTargetCompileHandler(
+    BuildInitializeManager initializeManager,
+    IBaseProtocolClientManager baseProtocolClientManager)
+        : IRequestHandler<CompileParams, CompileResult, RequestContext>
 {
-    private readonly BuildInitializeManager _initializeManager;
-    private readonly IBaseProtocolClientManager _baseProtocolClientManager;
-
-    public BuildTargetCompileHandler(
-        BuildInitializeManager initializeManager,
-        IBaseProtocolClientManager baseProtocolClientManager)
-    {
-        _initializeManager = initializeManager;
-        _baseProtocolClientManager = baseProtocolClientManager;
-    }
+    private readonly BuildInitializeManager _initializeManager = initializeManager;
+    private readonly IBaseProtocolClientManager _baseProtocolClientManager = baseProtocolClientManager;
 
     public bool MutatesSolutionState => false;
 

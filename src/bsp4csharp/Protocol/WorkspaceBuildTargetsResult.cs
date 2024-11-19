@@ -9,6 +9,6 @@ public class WorkspaceBuildTargetsResult
     /// The build targets in this workspace that
     /// contain sources with the given language ids.
     /// </summary>
-    [DataMember(Name="targets")]
+    [DataMember(Name = "targets")]
     public IReadOnlyCollection<BuildTarget> Targets { get; set; } = [];
 }

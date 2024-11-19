@@ -1,6 +1,5 @@
 using BaseProtocol;
 using BaseProtocol.ClientManager;
-using BaseProtocol.Handlers;
 using BaseProtocol.Server;
 using bsp4csharp.Protocol;
 using dotnet_bsp.Handlers;
@@ -19,7 +18,7 @@ public class BuildServer : AbstractBaseProtocolServer<RequestContext>
         IBpLogger logger,
         Action<IServiceCollection>? addExtraHandlers) : base(jsonRpc, logger)
     {
-        this._jsonRpc = jsonRpc;
+        _jsonRpc = jsonRpc;
         _addExtraHandlers = addExtraHandlers;
         // This spins up the queue and ensure the BP server is ready to start receiving requests
         Initialize();
@@ -32,8 +31,8 @@ public class BuildServer : AbstractBaseProtocolServer<RequestContext>
             new List<string>{
                 Methods.BuildInitialize,
                 Methods.BuildInitialized,
-                Methods.BuildExit,
                 Methods.BuildShutdown,
+                Methods.BuildExit,
             });
         SetupRequestDispatcher(handlerProvider);
 
@@ -51,8 +50,7 @@ public class BuildServer : AbstractBaseProtocolServer<RequestContext>
             .AddSingleton<IRequestContextFactory<RequestContext>, RequestContextFactory>()
             .AddSingleton<IHandlerProvider>(s => GetHandlerProvider())
             .AddSingleton<BuildInitializeManager>()
-            // .AddSingleton<IInitializeManager<InitializeBuildParams, InitializeBuildResult>, BuildInitializeManager>()
-            .AddSingleton<ILifeCycleManager, BpServiceLifeCycleManager>()
+            .AddSingleton<ILifeCycleManager, BspServiceLifeCycleManager>()
             .AddSingleton(this);
 
         var bpServices = new BpServices(serviceCollection);

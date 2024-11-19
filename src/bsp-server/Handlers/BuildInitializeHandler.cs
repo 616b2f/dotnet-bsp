@@ -5,19 +5,10 @@ using Microsoft.Build.Locator;
 namespace dotnet_bsp.Handlers;
 
 [BaseProtocolServerEndpoint(Methods.BuildInitialize)]
-internal class BuildInitializeHandler
+internal class BuildInitializeHandler(BuildInitializeManager initializeManager)
     : IRequestHandler<InitializeBuildParams, InitializeBuildResult, RequestContext>
 {
-    private readonly BuildInitializeManager _initializeManager;
-    private readonly IBaseProtocolClientManager _baseProtocolClientManager;
-
-    public BuildInitializeHandler(
-        BuildInitializeManager initializeManager,
-        IBaseProtocolClientManager baseProtocolClientManager)
-    {
-        _initializeManager = initializeManager;
-        _baseProtocolClientManager = baseProtocolClientManager;
-    }
+    private readonly BuildInitializeManager _initializeManager = initializeManager;
 
     public bool MutatesSolutionState => true;
 
