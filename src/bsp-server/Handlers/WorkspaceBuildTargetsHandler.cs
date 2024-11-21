@@ -53,8 +53,9 @@ internal partial class WorkspaceBuildTargetsHandler
             var dependencies = solution
                 .GetProjects()
                 .Select(x =>
-                    new BuildTargetIdentifier {
-                        Uri = UriFixer.WithFileSchema(x.FullPath) 
+                    new BuildTargetIdentifier
+                    {
+                        Uri = UriFixer.WithFileSchema(x.FullPath)
                     })
                 .ToArray()
                 .AsReadOnly();
@@ -70,7 +71,9 @@ internal partial class WorkspaceBuildTargetsHandler
                 Capabilities = new BuildTargetCapabilities
                 {
                     CanCompile = true,
-                    CanTest = true
+                    CanTest = true,
+                    CanDebug = false,
+                    CanRun = false
                 },
             };
             var baseDirectory = Path.GetDirectoryName(Path.GetFullPath(slnFilePath));
@@ -83,9 +86,10 @@ internal partial class WorkspaceBuildTargetsHandler
 
             var sln = SolutionFile.Parse(slnFilePath);
             var projectFilesInSln = sln.ProjectsInOrder
-                .Where(x => 
-                    x.ProjectType == SolutionProjectType.KnownToBeMSBuildFormat ||
-                    x.ProjectType == SolutionProjectType.WebProject)
+                .Where(x =>
+                    x.ProjectType is
+                        SolutionProjectType.KnownToBeMSBuildFormat or
+                        SolutionProjectType.WebProject)
                 .Select(x => x.AbsolutePath);
             projectFiles.AddRange(projectFilesInSln);
         }

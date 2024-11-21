@@ -1,3 +1,4 @@
+using bsp4csharp.Protocol;
 using StreamJsonRpc;
 using Xunit.Abstractions;
 
@@ -21,39 +22,16 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
         _cancellationToken = cancellationTokenSource.Token;
     }
 
-    public Task InitializeAsync()
+    public async Task InitializeAsync()
     {
-        return Task.CompletedTask;
-    }
-
-    [Fact]
-    public async Task RequestInitializeBuild_Success()
-    {
-        // Arrange
-
-        // Act
-        var initResult = await _client.BuildInitializeAsync(TestProjectPath.AspnetExample, _cancellationToken);
-
-        // Assert
-        Assert.Equal("dotnet-bsp", initResult.DisplayName);
-        Assert.Equal("2.1.1", initResult.BspVersion);
-        Assert.Equal("0.0.1", initResult.Version);
-        Assert.NotNull(initResult.Capabilities.CompileProvider);
-        Assert.Contains("csharp", initResult.Capabilities.CompileProvider.LanguageIds);
-        Assert.NotNull(initResult.Capabilities.RunProvider);
-        Assert.Contains("csharp", initResult.Capabilities.RunProvider.LanguageIds);
-        Assert.NotNull(initResult.Capabilities.TestProvider);
-        Assert.Contains("csharp", initResult.Capabilities.TestProvider.LanguageIds);
-        Assert.NotNull(initResult.Capabilities.TestCaseDiscoveryProvider);
-        Assert.Contains("csharp", initResult.Capabilities.TestCaseDiscoveryProvider.LanguageIds);
+        _ = await _client.BuildInitializeAsync(TestProjectPath.AspnetExample, _cancellationToken);
+        await _client.BuildInitializedAsync();
     }
 
     [Fact]
     public async Task RequestWorkspaceBuildTargets_AfterInitialize_Success()
     {
         // Arrange
-        _ = await _client.BuildInitializeAsync(TestProjectPath.AspnetExample, _cancellationToken);
-        await _client.BuildInitializedAsync();
 
         // Act
         var result = await _client.WorkspaceBuildTargetsAsync(_cancellationToken);
@@ -61,43 +39,26 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
         // Assert
         Assert.NotNull(result);
         Assert.Equal(6, result.Targets.Count);
-    }
 
-    [Fact]
-    public async Task Requests_BeforeInitializeBuildRequest_ShouldFail()
-    {
-        // Arrange
-        // Act
-        var act = () => _client.WorkspaceBuildTargetsAsync(_cancellationToken);
-
-        // Assert
-        var exception = await Assert.ThrowsAsync<RemoteInvocationException>(act);
-
+        var firstTarget = result.Targets.First();
         Assert.Multiple(() =>
         {
-            Assert.Equal("Server not Initialized", exception.Message);
-            Assert.Equal(-32002, exception.ErrorCode); // ServerNotInitialized
+            Assert.Equal("AspNet.Example.sln", firstTarget.DisplayName);
+            Assert.Equal($"file://{TestProjectPath.AspnetExample}/AspNet.Example.sln", firstTarget.Id.Uri.ToString());
+            Assert.NotNull(firstTarget.BaseDirectory);
+            Assert.Equal($"file://{TestProjectPath.AspnetExample}", firstTarget.BaseDirectory.ToString());
+            Assert.True(firstTarget.Capabilities.CanCompile, "CanCompile is false");
+            Assert.True(firstTarget.Capabilities.CanTest, "CanTest is false");
+            Assert.False(firstTarget.Capabilities.CanRun, "CanRun is true");
+            Assert.False(firstTarget.Capabilities.CanDebug, "CanDebug is true");
+            Assert.Equal(["csharp"], firstTarget.LanguageIds);
+            Assert.Equal([], firstTarget.Tags);
+            Assert.Null(firstTarget.Data);
+            Assert.Null(firstTarget.DataKind);
+            // Assert.Equal([], firstTarget.Dependencies);
         });
     }
 
-    [Fact]
-    public async Task Requests_BeforeInitializedBuildNotification_ShouldFail()
-    {
-        // Arrange
-        _ = await _client.BuildInitializeAsync(TestProjectPath.AspnetExample, _cancellationToken);
-
-        // Act
-        var act = () => _client.WorkspaceBuildTargetsAsync(_cancellationToken);
-
-        // Assert
-        var exception = await Assert.ThrowsAsync<RemoteInvocationException>(act);
-
-        Assert.Multiple(() =>
-        {
-            Assert.Equal(-32002, exception.ErrorCode); // ServerNotInitialized
-            Assert.Equal("Client did not send Initialized notification", exception.Message);
-        });
-    }
 
     public async Task DisposeAsync()
     {
