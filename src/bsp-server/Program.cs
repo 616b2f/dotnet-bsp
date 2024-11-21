@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging.Console;
 var parser = CreateCommandLineParser();
 return await parser.Parse(args).InvokeAsync(CancellationToken.None);
 
-static async Task RunAsync(ServerConfiguration serverConfiguration, CancellationToken cancellationToken)
+static async Task<int> RunAsync(ServerConfiguration serverConfiguration, CancellationToken cancellationToken)
 {
     // Before we initialize the LSP server we can't send LSP log messages.
     // Create a console logger as a fallback to use before the LSP server starts.
@@ -67,22 +67,21 @@ static async Task RunAsync(ServerConfiguration serverConfiguration, Cancellation
     // await pipeServer.WaitForConnectionAsync(cancellationToken);
 
     // var server = new BuildServerHost(pipeServer, pipeServer, buildServerLogger);
-
     var stdin = Console.OpenStandardInput();
     var stdout = Console.OpenStandardOutput();
     var server = new BuildServerHost(stdin, stdout, buildServerLogger);
-    server.Start();
 
-    logger.LogInformation("Language server initialized");
+    server.Start();
 
     try
     {
-        await server.WaitForExitAsync();
+        await server.WaitForExitAsync().ConfigureAwait(false);
+        return 0;
     }
-    finally
+    catch (Exception e)
     {
-        // Server has exited, cancel our service broker service
-        // await serviceBrokerFactory.ShutdownAndWaitForCompletionAsync();
+        logger.LogError(e, "Server exit with an exception");
+        return 1;
     }
 }
 

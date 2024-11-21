@@ -207,15 +207,6 @@ public abstract class AbstractBaseProtocolServer<TRequestContext>
 
     public Task WaitForExitAsync()
     {
-        lock (_lifeCycleLock)
-        {
-            // Ensure we've actually been asked to shutdown before waiting.
-            if (_shutdownRequestTask == null)
-            {
-                throw new InvalidOperationException("The language server has not yet been asked to shutdown.");
-            }
-        }
-
         // Note - we return the _serverExitedSource task here instead of the _exitNotification task as we may not have
         // finished processing the exit notification before a client calls into us asking to restart.
         // This is because unlike shutdown, exit is a notification where clients do not need to wait for a response.
@@ -264,7 +255,9 @@ public abstract class AbstractBaseProtocolServer<TRequestContext>
         {
             if (_shutdownRequestTask?.IsCompleted != true)
             {
-                throw new InvalidOperationException("The language server has not yet been asked to shutdown or has not finished shutting down.");
+                var ex = new InvalidOperationException("The server has not yet been asked to shutdown or has not finished shutting down.");
+                _serverExitedSource.TrySetException(ex);
+                throw ex;
             }
 
             // Run exit or return the already running exit request.

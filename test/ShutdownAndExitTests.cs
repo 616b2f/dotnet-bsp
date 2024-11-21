@@ -25,7 +25,6 @@ public partial class ShutdownAndExitTets(ITestOutputHelper outputHelper)
 
         // Act
         await client.ExitAsync();
-        client.Dispose();
         await buildServer.WaitForExitAsync(cancellationToken);
 
         // Assert
@@ -50,7 +49,6 @@ public partial class ShutdownAndExitTets(ITestOutputHelper outputHelper)
 
         // Act
         await client.ExitAsync();
-        client.Dispose();
         await buildServer.WaitForExitAsync(cancellationToken);
 
         // Assert

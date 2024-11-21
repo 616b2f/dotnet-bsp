@@ -18,7 +18,7 @@ internal sealed class BuildServerHost
     internal static BuildServerHost? Instance { get; private set; }
 
     private readonly ILogger _logger;
-    private readonly AbstractBaseProtocolServer<RequestContext> _buildServer;
+    private readonly BuildServer _buildServer;
     private readonly JsonRpc _jsonRpc;
 
     public BuildServerHost(Stream inputStream, Stream outputStream, ILogger logger)
@@ -50,10 +50,9 @@ internal sealed class BuildServerHost
         Instance = this;
     }
 
-    public async Task WaitForExitAsync()
+    public Task WaitForExitAsync()
     {
-        await _jsonRpc.Completion;
-        await _buildServer.WaitForExitAsync();
+        return _buildServer.WaitForExitAsync();
     }
 
     public T GetRequiredBspService<T>() where T : IBpService
