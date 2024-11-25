@@ -285,8 +285,8 @@ internal class MSBuildLogger(IBaseProtocolClientManager baseProtocolClientManage
         {
             Range = new bsp4csharp.Protocol.Range
             {
-                Start = new Position { Line = e.LineNumber - 1, Character = e.ColumnNumber - 1 },
-                End = new Position { Line = e.EndLineNumber - 1, Character = e.EndColumnNumber - 1 }
+                Start = new Position { Line = e.LineNumber, Character = e.ColumnNumber },
+                End = new Position { Line = e.EndLineNumber, Character = e.EndColumnNumber }
             },
             Message = e.Message ?? "No message",
             Code = e.Code,
@@ -316,8 +316,8 @@ internal class MSBuildLogger(IBaseProtocolClientManager baseProtocolClientManage
         {
             Range = new bsp4csharp.Protocol.Range
             {
-                Start = new Position { Line = e.LineNumber - 1, Character = e.ColumnNumber - 1 },
-                End = new Position { Line = e.EndLineNumber - 1, Character = e.EndColumnNumber - 1 }
+                Start = new Position { Line = e.LineNumber, Character = e.ColumnNumber },
+                End = new Position { Line = e.EndLineNumber, Character = e.EndColumnNumber }
             },
             Message = e.Message ?? "No message",
             Code = e.Code,
