@@ -281,12 +281,18 @@ internal class MSBuildLogger(IBaseProtocolClientManager baseProtocolClientManage
             _diagnosticKeysCollection.Add(key);
         }
 
+        var lineNumber = e.LineNumber == 0 ? e.LineNumber : e.LineNumber - 1;
+        var columnNumber = e.ColumnNumber == 0 ? e.ColumnNumber : e.ColumnNumber - 1;
         diagParams.Diagnostics.Add(new Diagnostic
         {
             Range = new bsp4csharp.Protocol.Range
             {
-                Start = new Position { Line = e.LineNumber, Character = e.ColumnNumber },
-                End = new Position { Line = e.EndLineNumber, Character = e.EndColumnNumber }
+                Start = new Position { Line = lineNumber, Character = columnNumber },
+                End = new Position
+                {
+                    Line = e.EndLineNumber == 0 ? lineNumber : e.EndLineNumber,
+                    Character = e.EndColumnNumber == 0 ? columnNumber : e.EndColumnNumber
+                }
             },
             Message = e.Message ?? "No message",
             Code = e.Code,
@@ -312,12 +318,18 @@ internal class MSBuildLogger(IBaseProtocolClientManager baseProtocolClientManage
             _diagnosticKeysCollection.Add(key);
         }
 
+        var lineNumber = e.LineNumber == 0 ? e.LineNumber : e.LineNumber - 1;
+        var columnNumber = e.ColumnNumber == 0 ? e.ColumnNumber : e.ColumnNumber - 1;
         diagParams.Diagnostics.Add(new Diagnostic
         {
             Range = new bsp4csharp.Protocol.Range
             {
-                Start = new Position { Line = e.LineNumber, Character = e.ColumnNumber },
-                End = new Position { Line = e.EndLineNumber, Character = e.EndColumnNumber }
+                Start = new Position { Line = lineNumber, Character = columnNumber },
+                End = new Position
+                {
+                    Line = e.EndLineNumber == 0 ? lineNumber : e.EndLineNumber,
+                    Character = e.EndColumnNumber == 0 ? columnNumber : e.EndColumnNumber
+                }
             },
             Message = e.Message ?? "No message",
             Code = e.Code,
