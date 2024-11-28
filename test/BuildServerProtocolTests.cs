@@ -8,13 +8,14 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
     private readonly CancellationToken _cancellationToken;
     private readonly BuildServerClient _client;
     private readonly TestBuildServer _buildServer;
+    private readonly ServerCallbacks _serverCallbacks;
 
     public BuildServerProtocolTests(ITestOutputHelper outputHelper)
     {
         var testlogger = new UnitTestLogger(outputHelper);
         _buildServer = BuildServerFactory.CreateServer(testlogger);
-        var serverCallbacks = new ServerCallbacks(outputHelper);
-        _client = _buildServer.CreateClient(serverCallbacks);
+        _serverCallbacks = new ServerCallbacks(outputHelper);
+        _client = _buildServer.CreateClient(_serverCallbacks);
 
         var cancellationTokenSource = new CancellationTokenSource();
         cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(3));
@@ -30,7 +31,7 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
     public async Task RequestWorkspaceBuildTargets_AfterInitialize_Success()
     {
         // Arrange
-        _ = await _client.BuildInitializeAsync(TestProjectPath.AspnetExample, _cancellationToken);
+        _ = await _client.BuildInitializeAsync(TestProjectPath.AspnetWithoutErrors, _cancellationToken);
         await _client.BuildInitializedAsync();
 
         // Act
@@ -44,9 +45,9 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
         Assert.Multiple(() =>
         {
             Assert.Equal("AspNet.Example.sln", firstTarget.DisplayName);
-            Assert.Equal($"file://{TestProjectPath.AspnetExample}/AspNet.Example.sln", firstTarget.Id.Uri.ToString());
+            Assert.Equal($"file://{TestProjectPath.AspnetWithoutErrors}/AspNet.Example.sln", firstTarget.Id.Uri.ToString());
             Assert.NotNull(firstTarget.BaseDirectory);
-            Assert.Equal($"file://{TestProjectPath.AspnetExample}", firstTarget.BaseDirectory.ToString());
+            Assert.Equal($"file://{TestProjectPath.AspnetWithoutErrors}", firstTarget.BaseDirectory.ToString());
             Assert.True(firstTarget.Capabilities.CanCompile, "CanCompile is false");
             Assert.True(firstTarget.Capabilities.CanTest, "CanTest is false");
             Assert.False(firstTarget.Capabilities.CanRun, "CanRun is true");
@@ -59,17 +60,16 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
         });
     }
 
-    [Fact]
-    public async Task RequestBuildTargetCompile_ForProjectWithErrors_Success()
+    [Theory] 
+    [InlineData(TestProject.AspnetWithBuildErrors, "; expected", 1)]
+    [InlineData(TestProject.AspnetWithRestoreErrors, "Unable to find package Microsoft.AspNetCore.OpenApi with version (>= 998.0.5)", 2)]
+    public async Task RequestBuildTargetCompile_ForProjectWithErrors_Success(string testProjectName, string expectedDiagnosticMessage, int expectedDiagnosticsCount)
     {
         // Arrange
-        _ = await _client.BuildInitializeAsync(TestProjectPath.AspnetWithErrors, _cancellationToken);
+        _ = await _client.BuildInitializeAsync(TestProjectPath.GetFullPathFor(testProjectName), _cancellationToken);
         await _client.BuildInitializedAsync();
 
-        // Act
         var buildTargets = await _client.WorkspaceBuildTargetsAsync(_cancellationToken);
-
-        // Assert
         Assert.NotNull(buildTargets);
         var slnTarget = buildTargets.Targets.First(x => x.DisplayName == "AspNet.Example.sln");
 
@@ -80,10 +80,16 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
             Targets = [slnTarget.Id],
             OriginId = expectedOriginId
         };
+
+        // Act
         var result = await _client.CompileAsync(compileParams, _cancellationToken);
 
+        // Assert
         Assert.Equal(expectedOriginId, result.OriginId);
         Assert.Equal(StatusCode.Error, result.StatusCode);
+        Assert.Equal(expectedDiagnosticsCount, _serverCallbacks.Diagnostics.Count);
+        var diag = _serverCallbacks.Diagnostics.First();
+        Assert.Contains(expectedDiagnosticMessage, diag.Message);
     }
 
 

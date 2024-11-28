@@ -32,7 +32,7 @@ public partial class InitializeAndInitializedTests : IAsyncLifetime
         // Arrange
 
         // Act
-        var initResult = await _client.BuildInitializeAsync(TestProjectPath.AspnetExample, _cancellationToken);
+        var initResult = await _client.BuildInitializeAsync(TestProjectPath.AspnetWithoutErrors, _cancellationToken);
 
         // Assert
         Assert.Equal("dotnet-bsp", initResult.DisplayName);
@@ -69,7 +69,7 @@ public partial class InitializeAndInitializedTests : IAsyncLifetime
     public async Task Requests_BeforeInitializedBuildNotification_ShouldFail()
     {
         // Arrange
-        _ = await _client.BuildInitializeAsync(TestProjectPath.AspnetExample, _cancellationToken);
+        _ = await _client.BuildInitializeAsync(TestProjectPath.AspnetWithoutErrors, _cancellationToken);
 
         // Act
         var act = () => _client.WorkspaceBuildTargetsAsync(_cancellationToken);
