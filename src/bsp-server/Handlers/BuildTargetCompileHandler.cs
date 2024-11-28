@@ -40,14 +40,14 @@ internal class BuildTargetCompileHandler(
                 context.Logger.LogInformation("Global Properties: {}", string.Join("\n", globalProps));
                 context.Logger.LogInformation("Start restore target: {}", proj.ProjectInstance.FullPath);
                 var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, compileParams.OriginId, workspacePath, proj.ProjectInstance.FullPath);
-                buildResult |= proj.ProjectInstance.Build(["Restore"], new [] {msBuildLogger});
+                buildResult &= proj.ProjectInstance.Build(["Restore"], [msBuildLogger]);
             }
 
             foreach (var proj in graph.ProjectNodesTopologicallySorted)
             {
                 context.Logger.LogInformation("Start building target: {}", proj.ProjectInstance.FullPath);
                 var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, compileParams.OriginId, workspacePath, proj.ProjectInstance.FullPath);
-                buildResult |= proj.ProjectInstance.Build(["Build"], new [] {msBuildLogger});
+                buildResult &= proj.ProjectInstance.Build(["Build"], [msBuildLogger]);
             }
         }
 

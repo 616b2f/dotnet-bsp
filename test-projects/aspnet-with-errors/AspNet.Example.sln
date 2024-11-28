@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1B8F81F9-27E4-4BF2-A06C-79613868A9F9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNet.Example", "src\AspNet.Example\AspNet.Example.csproj", "{5A375AD1-954F-45E6-A581-6D8C2CADF9D5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{AB266605-B4B7-4881-8628-D2E3D1E931A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNet.Example.Tests", "test\AspNet.Example.Tests\AspNet.Example.Tests.csproj", "{6302FAEB-7CD6-4BA7-BA95-59C95F164CEB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5A375AD1-954F-45E6-A581-6D8C2CADF9D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A375AD1-954F-45E6-A581-6D8C2CADF9D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A375AD1-954F-45E6-A581-6D8C2CADF9D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A375AD1-954F-45E6-A581-6D8C2CADF9D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6302FAEB-7CD6-4BA7-BA95-59C95F164CEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6302FAEB-7CD6-4BA7-BA95-59C95F164CEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6302FAEB-7CD6-4BA7-BA95-59C95F164CEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6302FAEB-7CD6-4BA7-BA95-59C95F164CEB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5A375AD1-954F-45E6-A581-6D8C2CADF9D5} = {1B8F81F9-27E4-4BF2-A06C-79613868A9F9}
+		{6302FAEB-7CD6-4BA7-BA95-59C95F164CEB} = {AB266605-B4B7-4881-8628-D2E3D1E931A9}
+	EndGlobalSection
+EndGlobal

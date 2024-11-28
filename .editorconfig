@@ -1,6 +1,17 @@
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
 
+[*{Test,Tests}.cs]
+# Anonymous function can be made static
+dotnet_diagnostic.IDE0320.severity = none
+csharp_prefer_static_anonymous_function = false
+# supress 'Use local function'
+dotnet_diagnostic.IDE0039.severity = none
+# supress 'Identifiers should not contain underscores'
+dotnet_diagnostic.CA1707.severity = none
+# supress 'Use .ConfigureAwait(bool)'
+dotnet_diagnostic.VSTHRD111.severity = none
+
 # C# files
 [*.cs]
 # supress 'Remove unnecessary expression value' warning
@@ -232,10 +243,3 @@ dotnet_naming_style.begins_with_i.required_suffix =
 dotnet_naming_style.begins_with_i.word_separator = 
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 
-[*{Test,Tests}.cs]
-# supress 'Use local function'
-dotnet_diagnostic.IDE0039.severity = none
-# supress 'Identifiers should not contain underscores'
-dotnet_diagnostic.CA1707.severity = none
-# supress 'Use .ConfigureAwait(bool)'
-dotnet_diagnostic.VSTHRD111.severity = none

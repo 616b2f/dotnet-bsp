@@ -1,5 +1,4 @@
 using bsp4csharp.Protocol;
-using StreamJsonRpc;
 using Xunit.Abstractions;
 
 namespace test;
@@ -22,16 +21,17 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
         _cancellationToken = cancellationTokenSource.Token;
     }
 
-    public async Task InitializeAsync()
+    public Task InitializeAsync()
     {
-        _ = await _client.BuildInitializeAsync(TestProjectPath.AspnetExample, _cancellationToken);
-        await _client.BuildInitializedAsync();
+        return Task.CompletedTask;
     }
 
     [Fact]
     public async Task RequestWorkspaceBuildTargets_AfterInitialize_Success()
     {
         // Arrange
+        _ = await _client.BuildInitializeAsync(TestProjectPath.AspnetExample, _cancellationToken);
+        await _client.BuildInitializedAsync();
 
         // Act
         var result = await _client.WorkspaceBuildTargetsAsync(_cancellationToken);
@@ -57,6 +57,33 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
             Assert.Null(firstTarget.DataKind);
             // Assert.Equal([], firstTarget.Dependencies);
         });
+    }
+
+    [Fact]
+    public async Task RequestBuildTargetCompile_ForProjectWithErrors_Success()
+    {
+        // Arrange
+        _ = await _client.BuildInitializeAsync(TestProjectPath.AspnetWithErrors, _cancellationToken);
+        await _client.BuildInitializedAsync();
+
+        // Act
+        var buildTargets = await _client.WorkspaceBuildTargetsAsync(_cancellationToken);
+
+        // Assert
+        Assert.NotNull(buildTargets);
+        var slnTarget = buildTargets.Targets.First(x => x.DisplayName == "AspNet.Example.sln");
+
+        var expectedOriginId = Guid.NewGuid().ToString();
+
+        var compileParams = new CompileParams
+        {
+            Targets = [slnTarget.Id],
+            OriginId = expectedOriginId
+        };
+        var result = await _client.CompileAsync(compileParams, _cancellationToken);
+
+        Assert.Equal(expectedOriginId, result.OriginId);
+        Assert.Equal(StatusCode.Error, result.StatusCode);
     }
 
 
