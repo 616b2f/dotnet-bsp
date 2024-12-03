@@ -3,10 +3,11 @@ using System.Runtime.Serialization;
 
 namespace bsp4csharp.Protocol;
 
+[DataContract]
 public record TestReportData
 {
     /** The build target that was compiled. */
-    [DataMember(Name="target")]
+    [DataMember(Name = "target")]
     public required BuildTargetIdentifier Target { get; set; }
 
     /** The total number of milliseconds tests take to run (e.g. doesn't include compile times). */

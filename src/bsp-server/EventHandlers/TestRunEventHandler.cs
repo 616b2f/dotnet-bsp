@@ -38,8 +38,11 @@ public class TestRunEventHandler : ITestRunEventsHandler
             OriginId = _originId,
             Message = "Test run started",
             EventTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-            // TODO: add TestTask data object to Data property
-            // DataKind = TaskStartDataKind.TestTask,
+            DataKind = TaskStartDataKind.TestTask,
+            Data = new TestTaskData
+            {
+                Target = _buildTargetIdentifier
+            }
         };
         _ = _baseProtocolClientManager.SendNotificationAsync(
             Methods.BuildTaskStart, taskStartParams, CancellationToken.None);
@@ -121,7 +124,7 @@ public class TestRunEventHandler : ITestRunEventsHandler
         var dict = testRunCompleteArgs.TestRunStatistics?.Stats;
         if (dict is not null && dict.ContainsKey(key))
         {
-            return (int)(dict[key]);
+            return (int)dict[key];
         }
         return 0;
     }
@@ -166,7 +169,8 @@ public class TestRunEventHandler : ITestRunEventsHandler
                     Methods.BuildTaskProgress, taskProgressParams, CancellationToken.None);
 
 
-                var testTaskId = new TaskId {
+                var testTaskId = new TaskId
+                {
                     Id = testResult.TestCase.FullyQualifiedName,
                     Parents = [_taskId.Id]
                 };
