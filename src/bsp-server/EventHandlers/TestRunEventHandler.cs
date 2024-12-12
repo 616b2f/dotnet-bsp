@@ -50,8 +50,15 @@ public class TestRunEventHandler : ITestRunEventsHandler
 
     public void HandleLogMessage(TestMessageLevel level, string? message)
     {
-        Console.WriteLine("Run Message: " + message);
-
+        var logMessageParams = new LogMessageParams
+        {
+            TaskId = _taskId,
+            OriginId = _originId,
+            MessageType = MessageType.Log,
+            Message = string.Format("[Test log]: {0}", message),
+        };
+        _ = _baseProtocolClientManager.SendNotificationAsync(
+            Methods.BuildLogMessage, logMessageParams, CancellationToken.None);
     }
 
     private void WriteDiagnostic(Microsoft.VisualStudio.TestPlatform.ObjectModel.TestResult result)
