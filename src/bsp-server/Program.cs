@@ -133,25 +133,3 @@ static CliRootCommand CreateCommandLineParser()
     });
     return rootCommand;
 }
-
-static (string clientPipe, string serverPipe) CreateNewPipeNames()
-{
-    // On windows, .NET and Nodejs use different formats for the pipe name
-    const string WINDOWS_NODJS_PREFIX = @"\\.\pipe\";
-    const string WINDOWS_DOTNET_PREFIX = @"\\.\";
-
-    // The pipe name constructed by some systems is very long (due to temp path).
-    // Shorten the unique id for the pipe. 
-    var newGuid = Guid.NewGuid().ToString();
-    var pipeName = newGuid.Split('-')[0];
-
-    return RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-        ? (WINDOWS_NODJS_PREFIX + pipeName, WINDOWS_DOTNET_PREFIX + pipeName)
-        : (GetUnixTypePipeName(pipeName), GetUnixTypePipeName(pipeName));
-
-    static string GetUnixTypePipeName(string pipeName)
-    {
-        // Unix-type pipes are actually writing to a file
-        return Path.Combine(Path.GetTempPath(), pipeName + ".sock");
-    }
-}
