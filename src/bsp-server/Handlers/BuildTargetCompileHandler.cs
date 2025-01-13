@@ -28,7 +28,7 @@ internal class BuildTargetCompileHandler(
         var initParams = _initializeManager.GetInitializeParams();
         if (initParams.RootUri.IsFile)
         {
-            var workspacePath = initParams.RootUri.AbsolutePath;
+            var workspacePath = initParams.RootUri.LocalPath;
             context.Logger.LogInformation("GetLoadedProjects from {}", workspacePath);
             _baseProtocolClientManager.SendClearDiagnosticsMessage();
 
