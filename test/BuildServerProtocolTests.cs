@@ -63,9 +63,9 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData(TestProject.AspnetWithBuildErrors, "; expected", 1)]
-    [InlineData(TestProject.AspnetWithRestoreErrors, "Unable to find package Microsoft.AspNetCore.OpenApi with version (>= 998.0.5)", 2)]
-    public async Task RequestBuildTargetCompile_ForProjectWithErrors_Success(string testProjectName, string expectedDiagnosticMessage, int expectedDiagnosticsCount)
+    [InlineData(TestProject.AspnetWithBuildErrors, "CS1002", "; expected", 1)]
+    [InlineData(TestProject.AspnetWithRestoreErrors, "NU1102", "(>= 998.0.5)", 2)]
+    public async Task RequestBuildTargetCompile_ForProjectWithErrors_Success(string testProjectName, string expectedDiagnosticCode, string expectedDiagnosticMessage, int expectedDiagnosticsCount)
     {
         // Arrange
         _ = await _client.BuildInitializeAsync(TestProjectPath.GetFullPathFor(testProjectName), _cancellationToken);
@@ -92,6 +92,7 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
         Assert.Equal(expectedDiagnosticsCount, _serverCallbacks.Diagnostics.Count);
         var diag = _serverCallbacks.Diagnostics.First();
         Assert.Contains(expectedDiagnosticMessage, diag.Message);
+        Assert.Contains(expectedDiagnosticCode, diag.Code);
     }
 
 
