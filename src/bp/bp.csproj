@@ -9,6 +9,7 @@
     </PackageDescription>
     <Nullable>enable</Nullable>
     <LangVersion>12.0</LangVersion>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
   <ItemGroup>
