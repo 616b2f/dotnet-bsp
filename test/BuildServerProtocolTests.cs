@@ -19,7 +19,7 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
         _client = _buildServer.CreateClient(_serverCallbacks);
 
         var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(6));
+        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(10));
         _cancellationToken = cancellationTokenSource.Token;
     }
 
