@@ -324,8 +324,8 @@
       },
       "System.CommandLine": {
         "type": "Transitive",
-        "resolved": "2.0.0-beta4.24324.3",
-        "contentHash": "UddDcdPmeAbRpkYHOMBHYS74UINTL5yXhzHTbruhVN7eR79J8RPGgq1nNXlz5TH4iMK/Fn6OlSFf4Z2UxCJpXw=="
+        "resolved": "2.0.0-beta4.24528.1",
+        "contentHash": "Xt8tsSU8yd0ZpbT9gl5DAwkMYWLo8PV1fq2R/belrUbHVVOIKqhLfbWksbdknUDpmzMHZenBtD6AGAp9uJTa2w=="
       },
       "System.ComponentModel.Composition": {
         "type": "Transitive",
@@ -488,7 +488,7 @@
           "Microsoft.TestPlatform": "[17.11.1, )",
           "Microsoft.TestPlatform.ObjectModel": "[17.11.1, )",
           "Microsoft.TestPlatform.TranslationLayer": "[17.11.1, )",
-          "System.CommandLine": "[2.0.0-beta4.24324.3, )",
+          "System.CommandLine": "[2.0.0-beta4.24528.1, )",
           "System.ComponentModel.Composition": "[8.0.0, )",
           "bsp4csharp": "[1.0.0, )"
         }

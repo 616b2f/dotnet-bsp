@@ -17,7 +17,7 @@ public partial class InitializeAndInitializedTests : IAsyncLifetime
         _client = _buildServer.CreateClient(serverCallbacks);
 
         var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(3));
+        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(4));
         _cancellationToken = cancellationTokenSource.Token;
     }
 

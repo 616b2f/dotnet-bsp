@@ -10,6 +10,6 @@ public record BuildTargetIdentifier
 
     public override string ToString()
     {
-        return Uri.ToString().Replace("file://", "");
+        return Uri.LocalPath.ToString();
     }
 }

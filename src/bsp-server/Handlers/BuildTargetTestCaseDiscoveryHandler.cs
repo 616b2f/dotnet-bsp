@@ -75,7 +75,7 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
                 }
             }
 
-            var workspacePath = initParams.RootUri.AbsolutePath;
+            var workspacePath = initParams.RootUri.LocalPath;
             _baseProtocolClientManager.SendClearDiagnosticsMessage();
             var testProjects = projects.LoadedProjects.Where(x => x.IsTestProject());
             context.Logger.LogInformation("Get loaded test projects from {}", workspacePath);

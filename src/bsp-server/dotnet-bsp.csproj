@@ -25,7 +25,7 @@
     <PackageReference Include="Microsoft.TestPlatform" Version="17.11.1" />
     <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="17.11.1" />
     <PackageReference Include="Microsoft.TestPlatform.TranslationLayer" Version="17.11.1" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.24324.3" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.24528.1" />
     <PackageReference Include="System.ComponentModel.Composition" Version="8.0.0" />
   </ItemGroup>
 

@@ -51,7 +51,7 @@ internal class BuildTargetCleanCacheHandler(
                 }
             }
 
-            var workspacePath = initParams.RootUri.AbsolutePath;
+            var workspacePath = initParams.RootUri.LocalPath;
             context.Logger.LogInformation("GetLoadedProjects from {}", workspacePath);
             foreach (var proj in projects.LoadedProjects)
             {

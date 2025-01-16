@@ -77,7 +77,7 @@ internal class BuildTargetRunHandler
         var projectFile = target;
         var proj = new ProjectInstance(projectFile);
         var initParams = _initializeManager.GetInitializeParams();
-        var workspacePath = initParams.RootUri.AbsolutePath;
+        var workspacePath = initParams.RootUri.LocalPath;
 
         var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, originId, workspacePath, projectFile);
         proj.Build(["Restore", "Build"], [msBuildLogger]);

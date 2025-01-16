@@ -17,6 +17,6 @@ internal static class TestProjectPath
 
     public static string GetFullPathFor(string projectName)
     {
-        return TestProjectDir + "/" + projectName;
+        return Path.Combine(TestProjectDir, projectName);
     }
 }

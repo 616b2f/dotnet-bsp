@@ -26,7 +26,7 @@ internal partial class WorkspaceBuildTargetsHandler
         var initParams = _initializeManager.GetInitializeParams();
         if (initParams.RootUri.IsFile)
         {
-            var workspacePath = initParams.RootUri.AbsolutePath;
+            var workspacePath = initParams.RootUri.LocalPath;
             var buildTargets = GetBuildTargetsInWorkspace(workspacePath, context.Logger);
             list.AddRange(buildTargets);
         }

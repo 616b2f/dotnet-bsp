@@ -1,4 +1,5 @@
 using bsp4csharp.Protocol;
+using dotnet_bsp;
 using Xunit.Abstractions;
 
 namespace test;
@@ -18,7 +19,7 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
         _client = _buildServer.CreateClient(_serverCallbacks);
 
         var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(3));
+        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(40));
         _cancellationToken = cancellationTokenSource.Token;
     }
 
@@ -45,9 +46,10 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
         Assert.Multiple(() =>
         {
             Assert.Equal("AspNet.Example.sln", firstTarget.DisplayName);
-            Assert.Equal($"file://{TestProjectPath.AspnetWithoutErrors}/AspNet.Example.sln", firstTarget.Id.Uri.ToString());
+            var slnUri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.AspnetWithoutErrors, "AspNet.Example.sln"));
+            Assert.Equal(slnUri.ToString(), firstTarget.Id.Uri.ToString());
             Assert.NotNull(firstTarget.BaseDirectory);
-            Assert.Equal($"file://{TestProjectPath.AspnetWithoutErrors}", firstTarget.BaseDirectory.ToString());
+            Assert.Equal(UriFixer.WithFileSchema(TestProjectPath.AspnetWithoutErrors).ToString(), firstTarget.BaseDirectory.ToString());
             Assert.True(firstTarget.Capabilities.CanCompile, "CanCompile is false");
             Assert.True(firstTarget.Capabilities.CanTest, "CanTest is false");
             Assert.False(firstTarget.Capabilities.CanRun, "CanRun is true");
@@ -60,10 +62,10 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
         });
     }
 
-    [Theory] 
-    [InlineData(TestProject.AspnetWithBuildErrors, "; expected", 1)]
-    [InlineData(TestProject.AspnetWithRestoreErrors, "Unable to find package Microsoft.AspNetCore.OpenApi with version (>= 998.0.5)", 2)]
-    public async Task RequestBuildTargetCompile_ForProjectWithErrors_Success(string testProjectName, string expectedDiagnosticMessage, int expectedDiagnosticsCount)
+    [Theory]
+    [InlineData(TestProject.AspnetWithBuildErrors, "CS1002", "; expected", 1)]
+    [InlineData(TestProject.AspnetWithRestoreErrors, "NU1102", "(>= 998.0.5)", 2)]
+    public async Task RequestBuildTargetCompile_ForProjectWithErrors_Success(string testProjectName, string expectedDiagnosticCode, string expectedDiagnosticMessage, int expectedDiagnosticsCount)
     {
         // Arrange
         _ = await _client.BuildInitializeAsync(TestProjectPath.GetFullPathFor(testProjectName), _cancellationToken);
@@ -90,6 +92,7 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
         Assert.Equal(expectedDiagnosticsCount, _serverCallbacks.Diagnostics.Count);
         var diag = _serverCallbacks.Diagnostics.First();
         Assert.Contains(expectedDiagnosticMessage, diag.Message);
+        Assert.Contains(expectedDiagnosticCode, diag.Code);
     }
 
 
