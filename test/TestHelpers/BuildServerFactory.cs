@@ -1,6 +1,7 @@
 using dotnet_bsp;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace test;
 
@@ -75,7 +76,14 @@ public sealed class TestBuildServer : IDisposable
         // _logger.LogError(errors);
         if (!_process.HasExited)
         {
-            _process.Kill(ProcessExtensions.SIGINT);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                _process.Kill();
+            }
+            else
+            {
+                _process.Kill(ProcessExtensions.SIGINT);
+            }
         }
 
         _process.Dispose();
