@@ -7,5 +7,8 @@ namespace dotnet_bsp.Handlers
     {
         [DataMember(Name = "filters")]
         public required string[] Filters { get; set; }
+
+        [DataMember(Name = "runSettings")]
+        public string? RunSettings { get; set; }
     }
 }
