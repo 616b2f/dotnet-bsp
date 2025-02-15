@@ -103,15 +103,6 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
         });
     }
 
-    private void HandleProject(TestCaseDiscoveryParams testParams, ProjectCollection projects, string projectFile, Dictionary<string, List<string>> projectTargets)
-    {
-        var proj = projects.LoadProject(projectFile);
-        if (!projectTargets.ContainsKey(proj.FullPath))
-        {
-            projectTargets[proj.FullPath] = new List<string>();
-        }
-    }
-
     private bool RunTestDiscovery(string? originId, Project proj, IEnumerable<string> targets, RequestContext context, MSBuildLogger msBuildLogger)
     {
         context.Logger.LogInformation("Restore and build test target: {}", proj.ProjectFileLocation);
