@@ -32,7 +32,7 @@ public class TestDiscoveryEventHandler : ITestDiscoveryEventsHandler
         {
             TaskId = _taskId,
             OriginId = _originId,
-            Message = "",
+            Message = "TestCase discovery started",
             EventTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             DataKind = TaskStartDataKind.TestCaseDiscoveryTask,
         };
@@ -44,8 +44,6 @@ public class TestDiscoveryEventHandler : ITestDiscoveryEventsHandler
     {
         if (discoveredTestCases != null)
         {
-            Console.WriteLine("Discovery: " + discoveredTestCases.FirstOrDefault()?.DisplayName);
-
             SendTestCaseFoundNotifications(discoveredTestCases);
         }
     }
@@ -86,20 +84,27 @@ public class TestDiscoveryEventHandler : ITestDiscoveryEventsHandler
         {
             TaskId = _taskId,
             OriginId = _originId,
-            Message = "Test case discovery finished",
+            Message = "TestCase discovery finished",
             EventTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             Status = StatusCode.Ok,
             DataKind = TaskFinishDataKind.TestCaseDiscoveryFinish,
         };
         var _ = _baseProtocolClientManager.SendNotificationAsync(
             Methods.BuildTaskFinish, taskFinishParams, CancellationToken.None);
-        Console.WriteLine("DiscoveryComplete");
         _waitHandle.Set();
     }
 
     public void HandleLogMessage(TestMessageLevel level, string? message)
     {
-        Console.WriteLine("Discovery Message: " + message);
+        var logMessageParams = new LogMessageParams
+        {
+            TaskId = _taskId,
+            OriginId = _originId,
+            MessageType = MessageType.Log,
+            Message = string.Format("[TestCaseDiscovery log]: {0}", message),
+        };
+        _ = _baseProtocolClientManager.SendNotificationAsync(
+            Methods.BuildLogMessage, logMessageParams, CancellationToken.None);
     }
 
     public void HandleRawMessage(string rawMessage)
