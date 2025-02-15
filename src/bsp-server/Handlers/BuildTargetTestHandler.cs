@@ -35,7 +35,7 @@ internal partial class BuildTargetTestHandler
 
         var testResult = true;
         var initParams = _initializeManager.GetInitializeParams();
-        var projectTargets = new Dictionary<string, List<string>>();
+        var projectTargets = new Dictionary<string, JObject?>();
         if (initParams.RootUri.IsFile)
         {
             var projects = new ProjectCollection();
@@ -92,7 +92,15 @@ internal partial class BuildTargetTestHandler
                 var targetPath = proj.Properties.First(x => x.Name == "TargetPath").EvaluatedValue;
                 context.Logger.LogInformation("targetPath: {}", targetPath);
 
-                RunAllTests(proj, [targetPath], testParams.OriginId, projectTarget.Value, context, msBuildLogger);
+                var dotnetTestParamsData = projectTarget.Value?.ToObject<DotnetTestParamsData>();
+                if (dotnetTestParamsData is not null)
+                {
+                    RunAllTests(proj, [targetPath], testParams.OriginId, dotnetTestParamsData.RunSettings, dotnetTestParamsData.Filters, context, msBuildLogger);
+                }
+                else
+                {
+                    RunAllTests(proj, [targetPath], testParams.OriginId, null, [], context, msBuildLogger);
+                }
             }
         }
 
@@ -103,26 +111,20 @@ internal partial class BuildTargetTestHandler
         });
     }
 
-    private void HandleProject(TestParams testParams, ProjectCollection projects, string projectFile, Dictionary<string, List<string>> projectTargets)
+    private void HandleProject(TestParams testParams, ProjectCollection projects, string projectFile, Dictionary<string, JObject> projectTargets)
     {
         var proj = projects.LoadProject(projectFile);
         if (!projectTargets.ContainsKey(proj.FullPath))
         {
-            projectTargets[proj.FullPath] = new List<string>();
-
             if (testParams.DataKind == TestParamsDataKinds.DotnetTest &&
-                testParams.Data is JObject)
+                testParams.Data is JObject testData)
             {
-                var dotnetTestParamsData = ((JObject)testParams.Data).ToObject<DotnetTestParamsData>();
-                if (dotnetTestParamsData is not null)
-                {
-                    projectTargets[proj.FullPath].AddRange(dotnetTestParamsData.Filters);
-                }
+                projectTargets[proj.FullPath] = testData;
             }
         }
     }
 
-    private void RunAllTests(Project proj, IEnumerable<string> targets, string? originId, List<string> testCaseFilters, RequestContext context, MSBuildLogger msBuildLogger)
+    private void RunAllTests(Project proj, IEnumerable<string> targets, string? originId, string? testRunSettings, string[] testCaseFilters, RequestContext context, MSBuildLogger msBuildLogger)
     {
         context.Logger.LogInformation("Restore and build test target: {}", proj.ProjectFileLocation);
         var buildSuccess = proj.Build(["Restore", "Build"], [msBuildLogger]);
@@ -164,7 +166,16 @@ internal partial class BuildTargetTestHandler
         consoleWrapper.InitializeExtensions(new List<string>() { testAdapterPath });
 
         var waitHandle = new AutoResetEvent(false);
-        var defaultRunSettings = "<RunSettings><RunConfiguration></RunConfiguration></RunSettings>";
+        var defaultRunSettings =
+            """
+            <RunSettings>
+                <RunConfiguration>
+                    <BatchSize>1500</BatchSize>
+                </RunConfiguration>
+            </RunSettings>
+            """;
+
+        var runSettings = testRunSettings ?? defaultRunSettings;
 
         var buildTargetIdentifier = new BuildTargetIdentifier
         {
@@ -172,7 +183,7 @@ internal partial class BuildTargetTestHandler
         };
         var runHandler = new TestRunEventHandler(waitHandle, originId, buildTargetIdentifier, _baseProtocolClientManager);
 
-        if (testCaseFilters.Count > 0)
+        if (testCaseFilters?.Length > 0)
         {
             var filter = string.Join("|", testCaseFilters);
             var testOptions = new TestPlatformOptions { TestCaseFilter = filter };
