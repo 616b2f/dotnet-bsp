@@ -95,7 +95,6 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
         Assert.Contains(expectedDiagnosticCode, diag.Code);
     }
 
-
     public async Task DisposeAsync()
     {
         await _client.ShutdownAsync();
