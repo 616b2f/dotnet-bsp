@@ -1,0 +1,2 @@
+mstest_tests.Test1.Test1_Success
+mstest_tests.Test1.TestMethod2

@@ -36,6 +36,16 @@ public static class BuildServerClientExtensions
         return client.SendRequestAsync<CompileParams, CompileResult>(Methods.BuildTargetCompile, compileParams, cancellationToken);
     }
 
+    public static Task<TestCaseDiscoveryResult> BuildTargetTestCaseDiscoveryAsync(this BuildServerClient client, TestCaseDiscoveryParams testCaseDiscoveryParams, CancellationToken cancellationToken)
+    {
+        return client.SendRequestAsync<TestCaseDiscoveryParams, TestCaseDiscoveryResult>(Methods.BuildTargetTestCaseDiscovery, testCaseDiscoveryParams, cancellationToken);
+    }
+
+    public static Task<TestResult> BuildTargetTestAsync(this BuildServerClient client, TestParams testParams, CancellationToken cancellationToken)
+    {
+        return client.SendRequestAsync<TestParams, TestResult>(Methods.BuildTargetTest, testParams, cancellationToken);
+    }
+
     public static Task ShutdownAsync(this BuildServerClient client)
     {
         return client.SendRequestAsync(Methods.BuildShutdown);
