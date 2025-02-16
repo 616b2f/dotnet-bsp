@@ -29,7 +29,6 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
 
     public Task InitializeAsync()
     {
-        // TODO: cleanup all bin/ and obj/ folders before each run
         return Task.CompletedTask;
     }
 
@@ -138,6 +137,9 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
     public async Task RequestBuildTargetTestCaseDiscovery_ForFramework_Success(string testProjectName, IList<TestCaseDiscoveredData> expectedTestCaseDiscoveredData)
     {
         var testProjectPath = TestProjectPath.GetFullPathFor(testProjectName);
+
+        CleanupOutputDirectories(testProjectPath);
+
         _ = await _client.BuildInitializeAsync(testProjectPath, _cancellationToken);
         await _client.BuildInitializedAsync();
 
@@ -197,6 +199,20 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
         }
 
         // Assert.Equivalent(expectedTestCaseDiscoveredData, discoveredTestCases);
+    }
+
+    private void CleanupOutputDirectories(string testProjectPath)
+    {
+        string[] dirs = ["bin", "obj"];
+        foreach (var dir in dirs)
+        {
+            var path = Path.Combine(testProjectPath, dir);
+            if (Directory.Exists(path))
+            {
+                Directory.Delete(path, true);
+            }
+        }
+
     }
 
     public async Task DisposeAsync()
