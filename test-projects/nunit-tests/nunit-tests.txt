@@ -1,3 +1,0 @@
-nunit_tests.Tests.Test1
-nunit_tests.Tests.Test1_Success("a")
-nunit_tests.Tests.Test1_Success("b")
