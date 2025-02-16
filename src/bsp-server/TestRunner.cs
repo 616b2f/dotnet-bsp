@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Microsoft.Build.Evaluation;
 using BaseProtocol;
+using Microsoft.Build.Execution;
 
 namespace dotnet_bsp;
 
@@ -61,6 +62,11 @@ public static class TestRunner
     public static string? FindTestAdapter(Project proj, RequestContext context)
     {
         var targetPath = proj.Properties.First(x => x.Name == "TargetPath").EvaluatedValue;
+        return FindTestAdapter(targetPath, context);
+    }
+
+    public static string? FindTestAdapter(string targetPath, RequestContext context)
+    {
         var targetDirectory = Path.GetDirectoryName(targetPath);
         if (targetDirectory is null)
         {

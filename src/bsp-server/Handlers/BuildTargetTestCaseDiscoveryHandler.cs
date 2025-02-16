@@ -1,11 +1,12 @@
 using BaseProtocol;
 using bsp4csharp.Protocol;
-using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 using dotnet_bsp.Logging;
 using Microsoft.TestPlatform.VsTestConsole.TranslationLayer;
 using Microsoft.TestPlatform.VsTestConsole.TranslationLayer.Interfaces;
 using dotnet_bsp.EventHandlers;
+using Microsoft.Build.Graph;
+using Microsoft.Build.Execution;
 
 namespace dotnet_bsp.Handlers;
 
@@ -30,68 +31,59 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
     {
         _initializeManager.EnsureInitialized();
 
+        var projects = new ProjectCollection();
+        var buildResult = true;
         var testCaseDiscoveryResult = true;
+        var targetFiles = testCaseDiscoveryParams.Targets.Select(x => x.ToString());
         var initParams = _initializeManager.GetInitializeParams();
         if (initParams.RootUri.IsFile)
         {
-            var projects = new ProjectCollection();
-            foreach (var target in testCaseDiscoveryParams.Targets)
+            var workspacePath = initParams.RootUri.LocalPath;
+            context.Logger.LogInformation("GetLoadedProjects from {}", workspacePath);
+            _baseProtocolClientManager.SendClearDiagnosticsMessage();
+
+            var graph = new ProjectGraph(targetFiles, projects);
+            foreach (var proj in graph.ProjectNodesTopologicallySorted)
             {
-                var fileExtension = Path.GetExtension(target.ToString());
-                context.Logger.LogInformation("Target file extension {}", fileExtension);
-                if (fileExtension == ".sln")
+                var globalProps = proj.ProjectInstance.GlobalProperties
+                    .Select(x => string.Format("{0}={1}", x.Key, x.Value))
+                    .ToArray();
+                context.Logger.LogInformation("Global Properties: {}", string.Join("\n", globalProps));
+                context.Logger.LogInformation("Start restore target: {}", proj.ProjectInstance.FullPath);
+                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testCaseDiscoveryParams.OriginId, workspacePath, proj.ProjectInstance.FullPath);
+                var result = proj.ProjectInstance.Build(["Restore"], [msBuildLogger]);
+                context.Logger.LogInformation($"{proj.ProjectInstance.FullPath} restore result: {result}");
+                buildResult &= result;
+            }
+
+            if (buildResult)
+            {
+                graph = new ProjectGraph(targetFiles, projects);
+                foreach (var projNode in graph.ProjectNodesTopologicallySorted)
                 {
-                    var slnFile = SolutionFile.Parse(target.ToString());
-
-                    var configurationName = slnFile.GetDefaultConfigurationName();
-                    var platformName = slnFile.GetDefaultPlatformName();
-                    if (string.Equals(platformName, "Any CPU", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        platformName = "AnyCpu";
-                    }
-
-                    context.Logger.LogInformation("use platformName: {}", platformName);
-                    context.Logger.LogInformation("use configurationName: {}", configurationName);
-                    var projectFilesInSln = slnFile.ProjectsInOrder
-                        .Where(x => 
-                            (x.ProjectType == SolutionProjectType.KnownToBeMSBuildFormat ||
-                            x.ProjectType == SolutionProjectType.WebProject) &&
-                            // and only projects that has the build flag enabled for the provided configuration
-                            x.ProjectConfigurations.Values.Any(v =>
-                                v.ConfigurationName.Equals(configurationName, StringComparison.InvariantCultureIgnoreCase) &&
-                                v.PlatformName.Equals(platformName, StringComparison.InvariantCultureIgnoreCase) &&
-                                v.IncludeInBuild)
-                            )
-                        .Select(x => x.AbsolutePath);
-
-                    foreach (var projectFile in projectFilesInSln)
-                    {
-                        var proj = projects.LoadProject(projectFile);
-                    }
-                }
-                else if (fileExtension == ".csproj")
-                {
-                    var proj = projects.LoadProject(target.ToString());
+                    context.Logger.LogInformation("Start building target: {}", projNode.ProjectInstance.FullPath);
+                    var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testCaseDiscoveryParams.OriginId, workspacePath, projNode.ProjectInstance.FullPath);
+                    var result = projNode.ProjectInstance.Build(["Build"], [msBuildLogger]);
+                    context.Logger.LogInformation($"{projNode.ProjectInstance.FullPath} build result: {result}");
+                    buildResult &= result;
                 }
             }
 
-            var workspacePath = initParams.RootUri.LocalPath;
-            _baseProtocolClientManager.SendClearDiagnosticsMessage();
-            var testProjects = projects.LoadedProjects.Where(x => x.IsTestProject());
-            context.Logger.LogInformation("Get loaded test projects from {}", workspacePath);
-            foreach (var proj in testProjects)
+            if (buildResult)
             {
-                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testCaseDiscoveryParams.OriginId, workspacePath, proj.FullPath);
-
-                context.Logger.LogInformation("Start test target: {}", proj.ProjectFileLocation);
-                var targetPath = proj.Properties.First(x => x.Name == "TargetPath").EvaluatedValue;
-                context.Logger.LogInformation("targetPath: {}", targetPath);
-
-                var result = RunTestDiscovery(testCaseDiscoveryParams.OriginId, proj, [targetPath], context, msBuildLogger);
-
-                if (!result)
+                graph = new ProjectGraph(targetFiles, projects);
+                foreach (var proj in graph.ProjectNodesTopologicallySorted)
                 {
-                    testCaseDiscoveryResult = result;
+                    context.Logger.LogInformation("Start test target: {}", proj.ProjectInstance.FullPath);
+                    var targetPath = proj.ProjectInstance.Properties.First(x => x.Name == "TargetPath").EvaluatedValue;
+                    context.Logger.LogInformation("targetPath: {}", targetPath);
+
+                    var result = RunTestDiscovery(testCaseDiscoveryParams.OriginId, proj.ProjectInstance, [targetPath], context);
+
+                    if (!result)
+                    {
+                        testCaseDiscoveryResult = result;
+                    }
                 }
             }
         }
@@ -103,17 +95,8 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
         });
     }
 
-    private bool RunTestDiscovery(string? originId, Project proj, IEnumerable<string> targets, RequestContext context, MSBuildLogger msBuildLogger)
+    private bool RunTestDiscovery(string? originId, ProjectInstance proj, IEnumerable<string> targets, RequestContext context)
     {
-        context.Logger.LogInformation("Restore and build test target: {}", proj.ProjectFileLocation);
-        var buildSuccess = proj.Build(["Restore", "Build"], [msBuildLogger]);
-
-        if (!buildSuccess)
-        {
-            context.Logger.LogError("Restore or Build failed");
-            return false;
-        }
-
         var outputPath = proj.Properties.First(x => x.Name == "OutputPath").EvaluatedValue;
         context.Logger.LogInformation("outputPath: {}", outputPath);
 
@@ -128,7 +111,8 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
             return false;
         }
 
-        var testAdapterPath = TestRunner.FindTestAdapter(proj, context);
+        var targetPath = proj.Properties.First(x => x.Name == "TargetPath").EvaluatedValue;
+        var testAdapterPath = TestRunner.FindTestAdapter(targetPath, context);
 
         if (testAdapterPath is null)
         {
