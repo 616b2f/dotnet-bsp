@@ -1,7 +1,6 @@
 using System.Text.RegularExpressions;
 using Microsoft.Build.Evaluation;
 using BaseProtocol;
-using Microsoft.Build.Execution;
 
 namespace dotnet_bsp;
 
@@ -12,8 +11,13 @@ public static class TestRunner
     public static string? FindVsTestConsole()
     {
         var userDir = Environment.ExpandEnvironmentVariables("%HOME%/.dotnet");
+        var programFilesDir = Environment.ExpandEnvironmentVariables("%ProgramFiles%/dotnet");
+        var programFilesX64Dir = Environment.ExpandEnvironmentVariables("%ProgramFiles%/dotnet/x64");
         string[] dirs = [
+
             userDir,
+            programFilesDir,
+            programFilesX64Dir,
             "/usr/lib/dotnet/sdk",
             "/usr/lib64/dotnet/sdk",
             "/usr/share/dotnet/sdk"
