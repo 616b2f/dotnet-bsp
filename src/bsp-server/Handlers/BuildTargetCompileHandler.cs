@@ -50,7 +50,7 @@ internal class BuildTargetCompileHandler(
                 context.Logger.LogInformation("Start building target: {}", proj.ProjectInstance.FullPath);
                 var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, compileParams.OriginId, workspacePath, proj.ProjectInstance.FullPath);
                 var result = proj.ProjectInstance.Build(["Build"], [msBuildLogger]);
-                context.Logger.LogInformation($"{proj.ProjectInstance.FullPath} restore result: {result}");
+                context.Logger.LogInformation($"{proj.ProjectInstance.FullPath} build result: {result}");
                 buildResult &= result;
             }
         }
