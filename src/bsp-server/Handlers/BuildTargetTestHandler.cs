@@ -9,6 +9,7 @@ using TestResult = bsp4csharp.Protocol.TestResult;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
 using Newtonsoft.Json.Linq;
 using dotnet_bsp.EventHandlers;
+using System.Text.RegularExpressions;
 
 namespace dotnet_bsp.Handlers;
 
@@ -95,11 +96,11 @@ internal partial class BuildTargetTestHandler
                 var dotnetTestParamsData = projectTarget.Value?.ToObject<DotnetTestParamsData>();
                 if (dotnetTestParamsData is not null)
                 {
-                    RunAllTests(proj, [targetPath], testParams.OriginId, dotnetTestParamsData.RunSettings, dotnetTestParamsData.Filters, context, msBuildLogger);
+                    RunAllTests(proj, [targetPath], testParams.OriginId, dotnetTestParamsData.RunSettings, dotnetTestParamsData.Filter, context, msBuildLogger);
                 }
                 else
                 {
-                    RunAllTests(proj, [targetPath], testParams.OriginId, null, [], context, msBuildLogger);
+                    RunAllTests(proj, [targetPath], testParams.OriginId, null, string.Empty, context, msBuildLogger);
                 }
             }
         }
@@ -124,7 +125,7 @@ internal partial class BuildTargetTestHandler
         }
     }
 
-    private void RunAllTests(Project proj, IEnumerable<string> targets, string? originId, string? testRunSettings, string[] testCaseFilters, RequestContext context, MSBuildLogger msBuildLogger)
+    private void RunAllTests(Project proj, IEnumerable<string> targets, string? originId, string? testRunSettings, string testCaseFilter, RequestContext context, MSBuildLogger msBuildLogger)
     {
         context.Logger.LogInformation("Restore and build test target: {}", proj.ProjectFileLocation);
         var buildSuccess = proj.Build(["Restore", "Build"], [msBuildLogger]);
@@ -183,12 +184,16 @@ internal partial class BuildTargetTestHandler
         };
         var runHandler = new TestRunEventHandler(waitHandle, originId, buildTargetIdentifier, _baseProtocolClientManager);
 
-        if (testCaseFilters?.Length > 0)
+        if (!string.IsNullOrEmpty(testCaseFilter))
         {
-            var filter = string.Join("|", testCaseFilters);
-            var testOptions = new TestPlatformOptions { TestCaseFilter = filter };
-            context.Logger.LogInformation("Run test cases with filters: {}", filter);
-            consoleWrapper.RunTests(targets, defaultRunSettings, testOptions, runHandler);
+            var discoveryHandler = new TestDiscoveryEventHandler(waitHandle, buildTargetIdentifier, originId, _baseProtocolClientManager);
+            consoleWrapper.DiscoverTests(targets, defaultRunSettings, discoveryHandler);
+            waitHandle.WaitOne();
+
+            var matchedTestCases = MatchTestCasesByFilter(testCaseFilter, context, discoveryHandler);
+
+            waitHandle = new AutoResetEvent(false);
+            consoleWrapper.RunTests(matchedTestCases, defaultRunSettings, runHandler);
         }
         else
         {
@@ -200,4 +205,27 @@ internal partial class BuildTargetTestHandler
         consoleWrapper.EndSession();
     }
 
+    private static IEnumerable<Microsoft.VisualStudio.TestPlatform.ObjectModel.TestCase> MatchTestCasesByFilter(string testCaseFilter, RequestContext context, TestDiscoveryEventHandler discoveryHandler)
+    {
+        var testCaseIds = new List<Guid>();
+        var regex = new Regex("^id==(.*)$");
+        var match = regex.Match(testCaseFilter);
+        if (match.Success)
+        {
+            var val = match.Groups[1].Value;
+            if (!string.IsNullOrEmpty(val) &&
+                Guid.TryParse(val, out Guid testCaseId))
+            {
+                testCaseIds.Add(testCaseId);
+            }
+        }
+        context.Logger.LogInformation("Test case IDs found in filter: {}", string.Join(",", testCaseIds));
+
+        var matchedTestCases = discoveryHandler.DiscoveredTestCases
+            .Where(x => testCaseIds.Contains(x.Id));
+        var rawIds = string.Join(",", matchedTestCases
+            .Select(x => x.Id.ToString()));
+        context.Logger.LogInformation("Run test cases with IDs: {}", rawIds);
+        return matchedTestCases;
+    }
 }

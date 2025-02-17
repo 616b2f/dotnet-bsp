@@ -12,6 +12,8 @@ public class TestDiscoveryEventHandler : ITestDiscoveryEventsHandler
     private readonly BuildTargetIdentifier _buildTarget;
     private readonly string? _originId;
     private readonly IBaseProtocolClientManager _baseProtocolClientManager;
+    private readonly List<TestCase> _discoveredTestCases;
+    public IEnumerable<TestCase> DiscoveredTestCases => _discoveredTestCases;
 
     private readonly TaskId _taskId;
 
@@ -22,6 +24,7 @@ public class TestDiscoveryEventHandler : ITestDiscoveryEventsHandler
         _originId = originId;
         _baseProtocolClientManager = baseProtocolClientManager;
         _taskId = new TaskId { Id = Guid.NewGuid().ToString() };
+        _discoveredTestCases = [];
 
         StartTestCaseDiscovery();
     }
@@ -52,6 +55,7 @@ public class TestDiscoveryEventHandler : ITestDiscoveryEventsHandler
     {
         foreach (var testCase in discoveredTestCases)
         {
+            _discoveredTestCases.Add(testCase);
             var taskProgressParams = new TaskProgressParams
             {
                 TaskId = _taskId,
