@@ -212,7 +212,10 @@ public class TestRunEventHandler : ITestRunEventsHandler
                     DataKind = TaskFinishDataKind.TestFinish,
                     Data = new TestFinishData
                     {
-                        DisplayName = testResult.TestCase.FullyQualifiedName,
+                        Id = testResult.TestCase.Id.ToString("N"),
+                        DisplayName = testResult.TestCase.DisplayName,
+                        BuildTarget = _buildTargetIdentifier,
+                        FullyQualifiedName = testResult.TestCase.FullyQualifiedName,
                         Message = CombineTestMessages(testResult.Messages, testResult.ErrorMessage, testResult.ErrorStackTrace),
                         Status = ConvertTestOutcome(testResult.Outcome),
                         Location = location

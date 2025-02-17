@@ -60,6 +60,7 @@ public class TestDiscoveryEventHandler : ITestDiscoveryEventsHandler
                 DataKind = TaskProgressDataKind.TestCaseDiscovered,
                 Data = new TestCaseDiscoveredData
                 {
+                    Id = testCase.Id.ToString("N"),
                     BuildTarget = _buildTarget,
                     Source = testCase.Source,
                     FilePath = testCase.CodeFilePath ?? "",
