@@ -5,6 +5,15 @@ namespace bsp4csharp.Protocol;
 [DataContract]
 public record TestFinishData
 {
+    [DataMember(Name = "id")]
+    public required string Id { get; set; }
+
+    [DataMember(Name = "buildTarget")]
+    public required BuildTargetIdentifier BuildTarget { get; set; }
+
+    [DataMember(Name = "fullyQualifiedName")]
+    public required string FullyQualifiedName { get; set; }
+
     /** Name or description of the test. */
     [DataMember(Name = "displayName")]
     public required string DisplayName { get; set; }

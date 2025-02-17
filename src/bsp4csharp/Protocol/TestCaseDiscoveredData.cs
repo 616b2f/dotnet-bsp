@@ -5,6 +5,9 @@ namespace bsp4csharp.Protocol;
 [DataContract]
 public record TestCaseDiscoveredData
 {
+    [DataMember(Name = "id")]
+    public required string Id { get; set; }
+
     [DataMember(Name = "displayName")]
     public required string DisplayName { get; set; }
 
