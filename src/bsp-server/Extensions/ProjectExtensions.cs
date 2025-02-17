@@ -1,4 +1,5 @@
 using Microsoft.Build.Evaluation;
+using Microsoft.Build.Execution;
 
 public static class ProjectExtensions
 {
@@ -7,6 +8,13 @@ public static class ProjectExtensions
     public static bool IsTestProject(this Project project)
     {
         return project.AllEvaluatedItems.Any(item => 
+            item.ItemType.Equals(PACKAGE_REFERENCE_TAG, StringComparison.OrdinalIgnoreCase) &&
+            item.EvaluatedInclude.Equals("Microsoft.NET.Test.Sdk", StringComparison.OrdinalIgnoreCase));
+    }
+
+    public static bool IsTestProject(this ProjectInstance project)
+    {
+        return project.Items.Any(item => 
             item.ItemType.Equals(PACKAGE_REFERENCE_TAG, StringComparison.OrdinalIgnoreCase) &&
             item.EvaluatedInclude.Equals("Microsoft.NET.Test.Sdk", StringComparison.OrdinalIgnoreCase));
     }

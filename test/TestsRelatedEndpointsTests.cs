@@ -42,6 +42,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                 new List<TestCaseDiscoveredData>
                 {
                     new() {
+                        Id = "7cb68ff645bdbfb79d50da3baa24cc52",
                         FullyQualifiedName = "mstest_tests.Test1.Test1_Success",
                         DisplayName = "Test1_Success (\"a\")",
                         FilePath = Path.Combine(TestProjectPath.MsTestTests, "Test1.cs"),
@@ -50,6 +51,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.MsTestTests, "mstest-tests.csproj")) }
                     },
                     new() {
+                        Id = "7bf6fe0f0a7eadd3853ab80bcc0e08c8",
                         FullyQualifiedName = "mstest_tests.Test1.Test1_Success",
                         DisplayName = "Test1_Success (\"b\")",
                         FilePath = Path.Combine(TestProjectPath.MsTestTests, "Test1.cs"),
@@ -58,6 +60,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.MsTestTests, "mstest-tests.csproj")) }
                     },
                     new() {
+                        Id = "18b4d237df0079641bff90d85d47fc44",
                         FullyQualifiedName = "mstest_tests.Test1.TestMethod2",
                         DisplayName = "TestMethod2",
                         FilePath = Path.Combine(TestProjectPath.MsTestTests, "Test1.cs"),
@@ -73,6 +76,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                 new List<TestCaseDiscoveredData>
                 {
                     new() {
+                        Id = "fed573ba74557a2b4bac775a81364a55",
                         FullyQualifiedName = "xunit_tests.UnitTest1.Test1_Success",
                         DisplayName = "xunit_tests.UnitTest1.Test1_Success(expectedValue: \"a\")",
                         FilePath = Path.Combine(TestProjectPath.XunitTests, "UnitTest1.cs"),
@@ -81,6 +85,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.XunitTests, "xunit-tests.csproj")) }
                     },
                     new() {
+                        Id = "ad63df2419d6468c651b48434dca4f7f",
                         FullyQualifiedName = "xunit_tests.UnitTest1.Test1_Success",
                         DisplayName = "xunit_tests.UnitTest1.Test1_Success(expectedValue: \"b\")",
                         FilePath = Path.Combine(TestProjectPath.XunitTests, "UnitTest1.cs"),
@@ -89,6 +94,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.XunitTests, "xunit-tests.csproj")) }
                     },
                     new() {
+                        Id = "97e017e6d23eeaea15aec7c9f7a6f7e1",
                         FullyQualifiedName = "xunit_tests.UnitTest1.Test2",
                         DisplayName = "xunit_tests.UnitTest1.Test2",
                         FilePath = Path.Combine(TestProjectPath.XunitTests, "UnitTest1.cs"),
@@ -104,6 +110,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                 new List<TestCaseDiscoveredData>
                 {
                     new() {
+                        Id = "0adf3ecf65aa39bf8c2cef8e32d00c4d",
                         FullyQualifiedName = "nunit_tests.Tests.Test1",
                         DisplayName = "Test1",
                         FilePath = Path.Combine(TestProjectPath.NunitTests, "UnitTest1.cs"),
@@ -112,6 +119,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.NunitTests, "nunit-tests.csproj")) }
                     },
                     new() {
+                        Id = "184508b7d754ea96bb09cfe0c139881d",
                         FullyQualifiedName = "nunit_tests.Tests.Test1_Success(\"a\")",
                         DisplayName = "Test1_Success(\"a\")",
                         FilePath = Path.Combine(TestProjectPath.NunitTests, "UnitTest1.cs"),
@@ -120,6 +128,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.NunitTests, "nunit-tests.csproj")) }
                     },
                     new() {
+                        Id = "4afdceb43dc9b939b2538d3b98bbeb94",
                         FullyQualifiedName = "nunit_tests.Tests.Test1_Success(\"b\")",
                         DisplayName = "Test1_Success(\"b\")",
                         FilePath = Path.Combine(TestProjectPath.NunitTests, "UnitTest1.cs"),
@@ -190,6 +199,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
             var expected = expectedTestCaseDiscoveredData[i];
             var actual = discoveredTestCases[i];
 
+            Assert.True(expected.Id == actual!.Id, $"{testProjectName}:{expected.DisplayName}: expected: {expected.Id} actual: {actual.Id}");
             Assert.Equal(expected.Source, actual!.Source);
             Assert.Equal(expected.FilePath, actual.FilePath);
             Assert.Equal(expected.BuildTarget.Uri, actual.BuildTarget.Uri);
