@@ -46,7 +46,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         FullyQualifiedName = "mstest_tests.Test1.Test1_Success",
                         DisplayName = "Test1_Success (\"a\")",
                         FilePath = Path.Combine(TestProjectPath.MsTestTests, "Test1.cs"),
-                        Source = Path.Combine(TestProjectPath.MsTestTests, "bin/Debug/net8.0/mstest-tests.dll"),
+                        Source = Path.Combine(TestProjectPath.MsTestTests, "bin", "Debug", "net8.0", "mstest-tests.dll"),
                         Line = 10,
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.MsTestTests, "mstest-tests.csproj")) }
                     },
@@ -55,7 +55,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         FullyQualifiedName = "mstest_tests.Test1.Test1_Success",
                         DisplayName = "Test1_Success (\"b\")",
                         FilePath = Path.Combine(TestProjectPath.MsTestTests, "Test1.cs"),
-                        Source = Path.Combine(TestProjectPath.MsTestTests, "bin/Debug/net8.0/mstest-tests.dll"),
+                        Source = Path.Combine(TestProjectPath.MsTestTests, "bin", "Debug", "net8.0", "mstest-tests.dll"),
                         Line = 10,
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.MsTestTests, "mstest-tests.csproj")) }
                     },
@@ -64,7 +64,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         FullyQualifiedName = "mstest_tests.Test1.TestMethod2",
                         DisplayName = "TestMethod2",
                         FilePath = Path.Combine(TestProjectPath.MsTestTests, "Test1.cs"),
-                        Source = Path.Combine(TestProjectPath.MsTestTests, "bin/Debug/net8.0/mstest-tests.dll"),
+                        Source = Path.Combine(TestProjectPath.MsTestTests, "bin", "Debug", "net8.0", "mstest-tests.dll"),
                         Line = 16,
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.MsTestTests, "mstest-tests.csproj")) }
                     }
@@ -80,7 +80,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         FullyQualifiedName = "xunit_tests.UnitTest1.Test1_Success",
                         DisplayName = "xunit_tests.UnitTest1.Test1_Success(expectedValue: \"a\")",
                         FilePath = Path.Combine(TestProjectPath.XunitTests, "UnitTest1.cs"),
-                        Source = Path.Combine(TestProjectPath.XunitTests, "bin/Debug/net8.0/xunit-tests.dll"),
+                        Source = Path.Combine(TestProjectPath.MsTestTests, "bin", "Debug", "net8.0", "xunit-tests.dll"),
                         Line = 9,
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.XunitTests, "xunit-tests.csproj")) }
                     },
@@ -89,7 +89,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         FullyQualifiedName = "xunit_tests.UnitTest1.Test1_Success",
                         DisplayName = "xunit_tests.UnitTest1.Test1_Success(expectedValue: \"b\")",
                         FilePath = Path.Combine(TestProjectPath.XunitTests, "UnitTest1.cs"),
-                        Source = Path.Combine(TestProjectPath.XunitTests, "bin/Debug/net8.0/xunit-tests.dll"),
+                        Source = Path.Combine(TestProjectPath.MsTestTests, "bin", "Debug", "net8.0", "xunit-tests.dll"),
                         Line = 9,
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.XunitTests, "xunit-tests.csproj")) }
                     },
@@ -98,7 +98,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         FullyQualifiedName = "xunit_tests.UnitTest1.Test2",
                         DisplayName = "xunit_tests.UnitTest1.Test2",
                         FilePath = Path.Combine(TestProjectPath.XunitTests, "UnitTest1.cs"),
-                        Source = Path.Combine(TestProjectPath.XunitTests, "bin/Debug/net8.0/xunit-tests.dll"),
+                        Source = Path.Combine(TestProjectPath.MsTestTests, "bin", "Debug", "net8.0", "xunit-tests.dll"),
                         Line = 15,
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.XunitTests, "xunit-tests.csproj")) }
                     }
@@ -114,7 +114,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         FullyQualifiedName = "nunit_tests.Tests.Test1",
                         DisplayName = "Test1",
                         FilePath = Path.Combine(TestProjectPath.NunitTests, "UnitTest1.cs"),
-                        Source = Path.Combine(TestProjectPath.NunitTests, "bin/Debug/net8.0/nunit-tests.dll"),
+                        Source = Path.Combine(TestProjectPath.MsTestTests, "bin", "Debug", "net8.0", "nunit-tests.dll"),
                         Line = 19,
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.NunitTests, "nunit-tests.csproj")) }
                     },
@@ -123,7 +123,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         FullyQualifiedName = "nunit_tests.Tests.Test1_Success(\"a\")",
                         DisplayName = "Test1_Success(\"a\")",
                         FilePath = Path.Combine(TestProjectPath.NunitTests, "UnitTest1.cs"),
-                        Source = Path.Combine(TestProjectPath.NunitTests, "bin/Debug/net8.0/nunit-tests.dll"),
+                        Source = Path.Combine(TestProjectPath.MsTestTests, "bin", "Debug", "net8.0", "nunit-tests.dll"),
                         Line = 13,
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.NunitTests, "nunit-tests.csproj")) }
                     },
@@ -132,7 +132,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
                         FullyQualifiedName = "nunit_tests.Tests.Test1_Success(\"b\")",
                         DisplayName = "Test1_Success(\"b\")",
                         FilePath = Path.Combine(TestProjectPath.NunitTests, "UnitTest1.cs"),
-                        Source = Path.Combine(TestProjectPath.NunitTests, "bin/Debug/net8.0/nunit-tests.dll"),
+                        Source = Path.Combine(TestProjectPath.MsTestTests, "bin", "Debug", "net8.0", "nunit-tests.dll"),
                         Line = 13,
                         BuildTarget = new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.NunitTests, "nunit-tests.csproj")) }
                     },
