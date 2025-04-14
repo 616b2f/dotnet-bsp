@@ -15,7 +15,6 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
 
     public TestsRelatedEndpointsTests(ITestOutputHelper outputHelper)
     {
-        // System.Environment.CurrentDirectory
         _outputHelper = outputHelper;
         var testlogger = new UnitTestLogger(outputHelper);
         _buildServer = BuildServerFactory.CreateServer(testlogger);
@@ -168,6 +167,102 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
 
         // Act
         var result = await _client.BuildTargetTestCaseDiscoveryAsync(testCaseDiscoveryParams, _cancellationToken);
+
+        // Assert
+        Assert.Equal(expectedOriginId, result.OriginId);
+        Assert.Equal(StatusCode.Ok, result.StatusCode);
+        var taskStart = _serverCallbacks.TaskNotifications
+            .OfType<TaskStartParams>()
+            .SingleOrDefault(x => x.DataKind == TaskStartDataKind.TestCaseDiscoveryTask);
+        Assert.NotNull(taskStart);
+        var taskFinish = _serverCallbacks.TaskNotifications
+            .OfType<TaskFinishParams>()
+            .SingleOrDefault(x => x.DataKind == TaskFinishDataKind.TestCaseDiscoveryFinish);
+        Assert.NotNull(taskFinish);
+        var tasksProcessing = _serverCallbacks.TaskNotifications
+            .OfType<TaskProgressParams>()
+            .Where(x => x.DataKind == TaskProgressDataKind.TestCaseDiscovered);
+        Assert.Equal(expectedTestCaseDiscoveredData.Count(), tasksProcessing.Count());
+
+        Assert.All(tasksProcessing, x => Assert.IsType<JObject>(x.Data));
+
+        var discoveredTestCases = tasksProcessing
+            .Select(x => x.Data)
+            .OfType<JObject>()
+            .Select(x => x.ToObject<TestCaseDiscoveredData>())
+            .ToList();
+
+        // Arrange
+        for (var i = 0; i < expectedTestCaseDiscoveredData.Count; i++)
+        {
+            var expected = expectedTestCaseDiscoveredData[i];
+            var actual = discoveredTestCases[i];
+
+            Assert.True(expected.Id == actual!.Id, $"{testProjectName}:{expected.DisplayName}: expected: {expected.Id} actual: {actual.Id}");
+            Assert.Equal(expected.Source, actual!.Source);
+            Assert.Equal(expected.FilePath, actual.FilePath);
+            Assert.Equal(expected.BuildTarget.Uri, actual.BuildTarget.Uri);
+            Assert.True(expected.Line == actual!.Line, $"{testProjectName}:{expected.DisplayName}: expected: {expected.Line} actual: {actual.Line}");
+            Assert.True(expected.FullyQualifiedName == actual!.FullyQualifiedName, $"{testProjectName}:{expected.DisplayName}: expected: {expected.FullyQualifiedName} actual: {actual.FullyQualifiedName}");
+            Assert.True(expected.DisplayName == actual!.DisplayName, $"{testProjectName}:{expected.DisplayName}: expected: {expected.DisplayName} actual: {actual.DisplayName}");
+        }
+
+        // Assert.Equivalent(expectedTestCaseDiscoveredData, discoveredTestCases);
+    }
+
+    public static IEnumerable<object[]> TestDataRunTest()
+    {
+        return new List<object[]>
+        {
+            new object[]
+            {
+                TestProject.MsTestTests,
+                new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.MsTestTests, "mstest-tests.csproj")) }
+            },
+            new object[]
+            {
+                TestProject.XunitTests,
+                new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.XunitTests, "xunit-tests.csproj")) }
+            },
+            new object[]
+            {
+                TestProject.NunitTests,
+                new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.NunitTests, "nunit-tests.csproj")) }
+            }
+        };
+    }
+
+    [Theory]
+    [MemberData(nameof(TestDataRunTest))]
+    public async Task RequestBuildTargetTest_ForSolution_Success(string testProjectName, Uri buildTarget)
+    {
+        var testProjectPath = TestProjectPath.GetFullPathFor(testProjectName);
+
+        CleanupOutputDirectories(testProjectPath);
+
+        _ = await _client.BuildInitializeAsync(testProjectPath, _cancellationToken);
+        await _client.BuildInitializedAsync();
+
+        var buildTargets = await _client.WorkspaceBuildTargetsAsync(_cancellationToken);
+        Assert.NotNull(buildTargets);
+
+        var buildTargetIdentifier = new BuildTargetIdentifier
+        {
+            Uri = buildTarget
+        };
+        // var testTarget = buildTargets.Targets.Any(x => x.Uri == );
+        Assert.NotNull(testTarget);
+
+        var expectedOriginId = Guid.NewGuid().ToString();
+
+        var testParams = new TestParams
+        {
+            Targets = [buildTargetIdentifier],
+            OriginId = expectedOriginId
+        };
+
+        // Act
+        var result = await _client.BuildTargetTestAsync(testParams, _cancellationToken);
 
         // Assert
         Assert.Equal(expectedOriginId, result.OriginId);
