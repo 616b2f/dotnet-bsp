@@ -79,7 +79,7 @@ internal class BuildTargetRunHandler
         var initParams = _initializeManager.GetInitializeParams();
         var workspacePath = initParams.RootUri.LocalPath;
 
-        var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, originId, workspacePath, projectFile);
+        var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, originId, workspacePath);
         proj.Build(["Restore", "Build"], [msBuildLogger]);
 
         var command = proj.GetPropertyValue("RunCommand");

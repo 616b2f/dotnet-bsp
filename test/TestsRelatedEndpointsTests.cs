@@ -1,5 +1,6 @@
 using bsp4csharp.Protocol;
 using dotnet_bsp;
+using dotnet_bsp.Handlers;
 using Newtonsoft.Json.Linq;
 using Xunit.Abstractions;
 
@@ -217,24 +218,30 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
             new object[]
             {
                 TestProject.MsTestTests,
-                new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.MsTestTests, "mstest-tests.csproj")) }
+                UriFixer.WithFileSchema(Path.Combine(TestProjectPath.MsTestTests, "mstest-tests.csproj")),
+                3
             },
             new object[]
             {
                 TestProject.XunitTests,
-                new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.XunitTests, "xunit-tests.csproj")) }
+                UriFixer.WithFileSchema(Path.Combine(TestProjectPath.XunitTests, "xunit-tests.csproj")),
+                3
             },
             new object[]
             {
                 TestProject.NunitTests,
-                new BuildTargetIdentifier{ Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.NunitTests, "nunit-tests.csproj")) }
+                UriFixer.WithFileSchema(Path.Combine(TestProjectPath.NunitTests, "nunit-tests.csproj")),
+                3
             }
         };
     }
 
     [Theory]
     [MemberData(nameof(TestDataRunTest))]
-    public async Task RequestBuildTargetTest_ForSolution_Success(string testProjectName, Uri buildTarget)
+    public async Task RequestBuildTargetTest_ForSolution_Success(
+        string testProjectName,
+        Uri buildTarget,
+        int expectedTestsRunCount)
     {
         var testProjectPath = TestProjectPath.GetFullPathFor(testProjectName);
 
@@ -243,21 +250,17 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
         _ = await _client.BuildInitializeAsync(testProjectPath, _cancellationToken);
         await _client.BuildInitializedAsync();
 
-        var buildTargets = await _client.WorkspaceBuildTargetsAsync(_cancellationToken);
-        Assert.NotNull(buildTargets);
-
-        var buildTargetIdentifier = new BuildTargetIdentifier
-        {
-            Uri = buildTarget
-        };
-        // var testTarget = buildTargets.Targets.Any(x => x.Uri == );
-        Assert.NotNull(testTarget);
-
         var expectedOriginId = Guid.NewGuid().ToString();
-
         var testParams = new TestParams
         {
-            Targets = [buildTargetIdentifier],
+            Targets = 
+            [
+                new BuildTargetIdentifier
+                {
+                    Uri = buildTarget
+                }
+            ],
+            DataKind = TestParamsDataKinds.DotnetTest,
             OriginId = expectedOriginId
         };
 
@@ -269,41 +272,28 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
         Assert.Equal(StatusCode.Ok, result.StatusCode);
         var taskStart = _serverCallbacks.TaskNotifications
             .OfType<TaskStartParams>()
-            .SingleOrDefault(x => x.DataKind == TaskStartDataKind.TestCaseDiscoveryTask);
+            .SingleOrDefault(x => x.DataKind == TaskStartDataKind.TestTask);
         Assert.NotNull(taskStart);
+
+        var tasksProcessingTestResult = _serverCallbacks.TaskNotifications
+            .OfType<TaskProgressParams>()
+            .Where(x => x.TaskId == taskStart.TaskId);
+        Assert.Equal(tasksProcessingTestResult.Count(), expectedTestsRunCount);
+
+        var testTasksStart = _serverCallbacks.TaskNotifications
+            .OfType<TaskStartParams>()
+            .Where(x => x.DataKind == TaskStartDataKind.TestStart);
+        Assert.Equal(testTasksStart.Count(), expectedTestsRunCount);
+
+        var testTasksFinish = _serverCallbacks.TaskNotifications
+            .OfType<TaskFinishParams>()
+            .Where(x => x.DataKind == TaskFinishDataKind.TestFinish);
+        Assert.Equal(testTasksFinish.Count(), expectedTestsRunCount);
+
         var taskFinish = _serverCallbacks.TaskNotifications
             .OfType<TaskFinishParams>()
-            .SingleOrDefault(x => x.DataKind == TaskFinishDataKind.TestCaseDiscoveryFinish);
+            .SingleOrDefault(x => x.DataKind == TaskFinishDataKind.TestReport);
         Assert.NotNull(taskFinish);
-        var tasksProcessing = _serverCallbacks.TaskNotifications
-            .OfType<TaskProgressParams>()
-            .Where(x => x.DataKind == TaskProgressDataKind.TestCaseDiscovered);
-        Assert.Equal(expectedTestCaseDiscoveredData.Count(), tasksProcessing.Count());
-
-        Assert.All(tasksProcessing, x => Assert.IsType<JObject>(x.Data));
-
-        var discoveredTestCases = tasksProcessing
-            .Select(x => x.Data)
-            .OfType<JObject>()
-            .Select(x => x.ToObject<TestCaseDiscoveredData>())
-            .ToList();
-
-        // Arrange
-        for (var i = 0; i < expectedTestCaseDiscoveredData.Count; i++)
-        {
-            var expected = expectedTestCaseDiscoveredData[i];
-            var actual = discoveredTestCases[i];
-
-            Assert.True(expected.Id == actual!.Id, $"{testProjectName}:{expected.DisplayName}: expected: {expected.Id} actual: {actual.Id}");
-            Assert.Equal(expected.Source, actual!.Source);
-            Assert.Equal(expected.FilePath, actual.FilePath);
-            Assert.Equal(expected.BuildTarget.Uri, actual.BuildTarget.Uri);
-            Assert.True(expected.Line == actual!.Line, $"{testProjectName}:{expected.DisplayName}: expected: {expected.Line} actual: {actual.Line}");
-            Assert.True(expected.FullyQualifiedName == actual!.FullyQualifiedName, $"{testProjectName}:{expected.DisplayName}: expected: {expected.FullyQualifiedName} actual: {actual.FullyQualifiedName}");
-            Assert.True(expected.DisplayName == actual!.DisplayName, $"{testProjectName}:{expected.DisplayName}: expected: {expected.DisplayName} actual: {actual.DisplayName}");
-        }
-
-        // Assert.Equivalent(expectedTestCaseDiscoveredData, discoveredTestCases);
     }
 
     private void CleanupOutputDirectories(string testProjectPath)
