@@ -6,17 +6,15 @@ using Methods = bsp4csharp.Protocol.Methods;
 
 namespace dotnet_bsp.Logging;
 
-internal class MSBuildLogger(IBaseProtocolClientManager baseProtocolClientManager, string? originId, string workspacePath, string buildTarget) : ILogger
+internal class MSBuildLogger(IBaseProtocolClientManager baseProtocolClientManager, string? originId, string workspacePath) : ILogger
 {
     private readonly IBaseProtocolClientManager _baseProtocolClientManager = baseProtocolClientManager;
     private readonly string _workspacePath = workspacePath;
-    private readonly string _buildTarget = buildTarget;
-    private readonly string _taskId = Guid.NewGuid().ToString();
     private readonly string? _originId = originId;
     private readonly ICollection<string> _diagnosticKeysCollection = [];
     private int Warnings = 0;
     private int Errors = 0;
-    private DateTime _buildStartTimestamp;
+    private readonly DateTime _buildStartTimestamp;
     private readonly string[] _targetsOfInterest = ["Clean", "Build", "Restore"];
 
     public LoggerVerbosity Verbosity { get; set; } = LoggerVerbosity.Normal;
@@ -25,11 +23,6 @@ internal class MSBuildLogger(IBaseProtocolClientManager baseProtocolClientManage
 
     public void Initialize(IEventSource eventSource)
     {
-        // eventSource.BuildStarted += BuildStarted;
-        // eventSource.BuildFinished += BuildFinished;
-        // eventSource.ProjectStarted += ProjectStarted;
-        // eventSource.ProjectFinished += ProjectFinished;
-
         eventSource.TargetStarted += TargetStarted;
         eventSource.TargetFinished += TargetFinished;
 
@@ -105,60 +98,6 @@ internal class MSBuildLogger(IBaseProtocolClientManager baseProtocolClientManage
                 Methods.BuildLogMessage, logMessgeParams, CancellationToken.None);
         }
     }
-
-
-    private void BuildStarted(object sender, BuildStartedEventArgs e)
-    {
-        var taskId = new TaskId { Id = _taskId };
-        var taskStartParams = new TaskStartParams
-        {
-            TaskId = taskId,
-            OriginId = _originId,
-            Message = e.Message + ": " + _buildTarget,
-            EventTime = e.Timestamp.Millisecond,
-            DataKind = TaskStartDataKind.CompileTask,
-            Data = new CompileTask
-            {
-                Target = new BuildTargetIdentifier { Uri = UriFixer.WithFileSchema(_buildTarget) }
-            }
-        };
-        _ = _baseProtocolClientManager.SendNotificationAsync(
-            Methods.BuildTaskStart, taskStartParams, CancellationToken.None);
-
-        _buildStartTimestamp = e.Timestamp;
-
-        var message = "[BuildStartEvent]:" + JsonConvert.SerializeObject(e);
-        var logMessgeParams = new LogMessageParams
-        {
-            Message = message,
-            MessageType = MessageType.Log
-        };
-        _ = _baseProtocolClientManager.SendNotificationAsync(
-            Methods.BuildLogMessage, logMessgeParams, CancellationToken.None);
-    }
-
-    private void BuildFinished(object sender, BuildFinishedEventArgs e)
-    {
-        var taskId = new TaskId { Id = _taskId };
-        var taskFinishParams = new TaskFinishParams
-        {
-            TaskId = taskId,
-            OriginId = _originId,
-            Message = e.Message + ": " + _buildTarget,
-            EventTime = e.Timestamp.Millisecond,
-            Status = e.Succeeded ? StatusCode.Ok : StatusCode.Error,
-            DataKind = TaskFinishDataKind.CompileReport,
-            Data = new CompileReport
-            {
-                Target = new BuildTargetIdentifier { Uri = UriFixer.WithFileSchema(_buildTarget) },
-                Warnings = Warnings,
-                Errors = Errors,
-                Time = Convert.ToInt64((e.Timestamp - _buildStartTimestamp).TotalMilliseconds),
-            }
-        };
-        var _ = _baseProtocolClientManager.SendNotificationAsync(
-            Methods.BuildTaskFinish, taskFinishParams, CancellationToken.None);
-   }
 
     private void ProjectStarted(object sender, ProjectStartedEventArgs e)
     {

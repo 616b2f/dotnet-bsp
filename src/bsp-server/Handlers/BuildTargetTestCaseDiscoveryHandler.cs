@@ -36,7 +36,7 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
         var buildResult = true;
         var testCaseDiscoveryResult = true;
 
-        var targetFiles = FilterProjectsOutIfPartOfAnSolutionTarget(testCaseDiscoveryParams.Targets)
+        var targetFiles = BuildHelper.FilterProjectsOutIfPartOfAnSolutionTarget(testCaseDiscoveryParams.Targets)
             .Select(x => x.ToString());
         var initParams = _initializeManager.GetInitializeParams();
         if (initParams.RootUri.IsFile)
@@ -45,41 +45,27 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
             context.Logger.LogInformation("GetLoadedProjects from {}", workspacePath);
             _baseProtocolClientManager.SendClearDiagnosticsMessage();
 
-            var graph = new ProjectGraph(targetFiles, projects);
-            var testProjects = graph.ProjectNodesTopologicallySorted
-                .Where(x => x.ProjectInstance.IsTestProject());
-            foreach (var proj in testProjects)
+            var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testCaseDiscoveryParams.OriginId, workspacePath);
+            buildResult &= BuildHelper.RestoreTestTargets(
+                targetFiles,
+                projects,
+                context.Logger,
+                msBuildLogger);
+
+            if (buildResult)
             {
-                var globalProps = proj.ProjectInstance.GlobalProperties
-                    .Select(x => string.Format("{0}={1}", x.Key, x.Value))
-                    .ToArray();
-                context.Logger.LogInformation("Global Properties: {}", string.Join("\n", globalProps));
-                context.Logger.LogInformation("Start restore target: {}", proj.ProjectInstance.FullPath);
-                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testCaseDiscoveryParams.OriginId, workspacePath, proj.ProjectInstance.FullPath);
-                var result = proj.ProjectInstance.Build(["Restore"], [msBuildLogger]);
-                context.Logger.LogInformation($"{proj.ProjectInstance.FullPath} restore result: {result}");
-                buildResult &= result;
+                msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testCaseDiscoveryParams.OriginId, workspacePath);
+                buildResult &= BuildHelper.BuildTestTargets(
+                    targetFiles,
+                    projects,
+                    context.Logger,
+                    msBuildLogger);
             }
 
             if (buildResult)
             {
-                graph = new ProjectGraph(targetFiles, projects);
-                testProjects = graph.ProjectNodesTopologicallySorted
-                    .Where(x => x.ProjectInstance.IsTestProject());
-                foreach (var projNode in testProjects)
-                {
-                    context.Logger.LogInformation("Start building target: {}", projNode.ProjectInstance.FullPath);
-                    var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testCaseDiscoveryParams.OriginId, workspacePath, projNode.ProjectInstance.FullPath);
-                    var result = projNode.ProjectInstance.Build(["Build"], [msBuildLogger]);
-                    context.Logger.LogInformation($"{projNode.ProjectInstance.FullPath} build result: {result}");
-                    buildResult &= result;
-                }
-            }
-
-            if (buildResult)
-            {
-                graph = new ProjectGraph(targetFiles, projects);
-                testProjects = graph.ProjectNodesTopologicallySorted
+                var graph = new ProjectGraph(targetFiles, projects);
+                var testProjects = graph.ProjectNodesTopologicallySorted
                     .Where(x => x.ProjectInstance.IsTestProject());
                 foreach (var proj in testProjects)
                 {
@@ -102,34 +88,6 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
             OriginId = testCaseDiscoveryParams.OriginId,
             StatusCode = testCaseDiscoveryResult ? StatusCode.Ok : StatusCode.Error
         });
-    }
-
-    private IEnumerable<BuildTargetIdentifier> FilterProjectsOutIfPartOfAnSolutionTarget(BuildTargetIdentifier[] targets)
-    {
-        var filteredTargets = targets.ToList();
-        var slnList = targets
-            .Where(x => Path.GetExtension(x.ToString()) == ".sln");
-        var projList = targets
-            .Where(x => Path.GetExtension(x.ToString()) == ".csproj")
-            .Select(x => x.Uri.AbsolutePath)
-            .ToList();
-        foreach (var target in slnList)
-        {
-            var slnFile = SolutionFile.Parse(target.ToString());
-            if (slnFile is not null)
-            {
-                var projectFilesInSln = slnFile.ProjectsInOrder
-                    .Select(x => x.AbsolutePath);
-
-                var includedProj = projectFilesInSln
-                    .Intersect(projList);
-
-                filteredTargets
-                    .RemoveAll(x => includedProj.Contains(x.Uri.AbsolutePath));
-            }
-        }
-
-        return filteredTargets;
     }
 
     private bool RunTestDiscovery(string? originId, ProjectInstance proj, IEnumerable<string> targets, RequestContext context)

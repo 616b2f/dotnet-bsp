@@ -45,9 +45,9 @@ public class ServerCallbacks(ITestOutputHelper testOutputHelper, LogLevel logLev
     [JsonRpcMethod(Methods.BuildTaskStart, UseSingleObjectParameterDeserialization = true)]
     public Task BuildTaskStartAsync(TaskStartParams taskStartParams)
     {
-        var message = string.Format("TaskStart: {0}", taskStartParams.Message);
         if (_logLevel >= LogLevel.Information)
         {
+            var message = string.Format("TaskStart[{0}]: {1}", taskStartParams.TaskId.Id, taskStartParams.Message);
             testOutputHelper.WriteLine(message);
         }
         _taskNotificationsCollection.Add(taskStartParams);
@@ -57,9 +57,9 @@ public class ServerCallbacks(ITestOutputHelper testOutputHelper, LogLevel logLev
     [JsonRpcMethod(Methods.BuildTaskProgress, UseSingleObjectParameterDeserialization = true)]
     public Task BuildTaskProgressAsync(TaskProgressParams taskProgressParams)
     {
-        var message = string.Format("TaskProgress: {0}", taskProgressParams.Message);
         if (_logLevel >= LogLevel.Information)
         {
+            var message = string.Format("TaskProgress[{0}]: {1}", taskProgressParams.TaskId.Id, taskProgressParams.Message);
             testOutputHelper.WriteLine(message);
         }
         _taskNotificationsCollection.Add(taskProgressParams);
@@ -69,9 +69,9 @@ public class ServerCallbacks(ITestOutputHelper testOutputHelper, LogLevel logLev
     [JsonRpcMethod(Methods.BuildTaskFinish, UseSingleObjectParameterDeserialization = true)]
     public Task BuildTaskFinishAsync(TaskFinishParams taskFinishParams)
     {
-        var message = string.Format("TaskFinish: {0}", taskFinishParams.Message);
         if (_logLevel >= LogLevel.Information)
         {
+            var message = string.Format("TaskFinish[{0}]: {1}", taskFinishParams.TaskId.Id, taskFinishParams.Message);
             testOutputHelper.WriteLine(message);
         }
         _taskNotificationsCollection.Add(taskFinishParams);

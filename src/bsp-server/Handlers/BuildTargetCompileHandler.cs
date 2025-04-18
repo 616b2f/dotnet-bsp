@@ -39,7 +39,7 @@ internal class BuildTargetCompileHandler(
                     .ToArray();
                 context.Logger.LogInformation("Global Properties: {}", string.Join("\n", globalProps));
                 context.Logger.LogInformation("Start restore target: {}", proj.ProjectInstance.FullPath);
-                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, compileParams.OriginId, workspacePath, proj.ProjectInstance.FullPath);
+                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, compileParams.OriginId, workspacePath);
                 var result = proj.ProjectInstance.Build(["Restore"], [msBuildLogger]);
                 context.Logger.LogInformation($"{proj.ProjectInstance.FullPath} restore result: {result}");
                 buildResult &= result;
@@ -48,7 +48,7 @@ internal class BuildTargetCompileHandler(
             foreach (var proj in graph.ProjectNodesTopologicallySorted)
             {
                 context.Logger.LogInformation("Start building target: {}", proj.ProjectInstance.FullPath);
-                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, compileParams.OriginId, workspacePath, proj.ProjectInstance.FullPath);
+                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, compileParams.OriginId, workspacePath);
                 var result = proj.ProjectInstance.Build(["Build"], [msBuildLogger]);
                 context.Logger.LogInformation($"{proj.ProjectInstance.FullPath} build result: {result}");
                 buildResult &= result;

@@ -1,5 +1,6 @@
 using bsp4csharp.Protocol;
 using dotnet_bsp;
+using dotnet_bsp.Handlers;
 using Newtonsoft.Json.Linq;
 using Xunit.Abstractions;
 
@@ -15,7 +16,6 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
 
     public TestsRelatedEndpointsTests(ITestOutputHelper outputHelper)
     {
-        // System.Environment.CurrentDirectory
         _outputHelper = outputHelper;
         var testlogger = new UnitTestLogger(outputHelper);
         _buildServer = BuildServerFactory.CreateServer(testlogger);
@@ -23,7 +23,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
         _client = _buildServer.CreateClient(_serverCallbacks);
 
         var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(20040));
+        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(45));
         _cancellationToken = cancellationTokenSource.Token;
     }
 
@@ -209,6 +209,170 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
         }
 
         // Assert.Equivalent(expectedTestCaseDiscoveredData, discoveredTestCases);
+    }
+
+    public static IEnumerable<object[]> TestDataRunTest()
+    {
+        return new List<object[]>
+        {
+            new object[]
+            {
+                TestProject.MsTestTests,
+                new TestParams
+                {
+                    Targets =
+                    [
+                        new BuildTargetIdentifier
+                        {
+                            Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.MsTestTests, "mstest-tests.csproj")),
+                        }
+                    ],
+                    OriginId = Guid.NewGuid().ToString(),
+                },
+                3
+            },
+            new object[]
+            {
+                TestProject.MsTestTests,
+                new TestParams
+                {
+                    Targets =
+                    [
+                        new BuildTargetIdentifier
+                        {
+                            Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.MsTestTests, "mstest-tests.csproj")),
+                        }
+                    ],
+                    DataKind = TestParamsDataKinds.DotnetTest,
+                    Data = new DotnetTestParamsData
+                    {
+                        Filter = "id==7bf6fe0f0a7eadd3853ab80bcc0e08c8",
+                    },
+                    OriginId = Guid.NewGuid().ToString(),
+                },
+                1
+            },
+            new object[]
+            {
+                TestProject.XunitTests,
+                new TestParams
+                {
+                    Targets =
+                    [
+                        new BuildTargetIdentifier
+                        {
+                            Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.XunitTests, "xunit-tests.csproj")),
+                        }
+                    ],
+                    OriginId = Guid.NewGuid().ToString(),
+                },
+                3
+            },
+            new object[]
+            {
+                TestProject.XunitTests,
+                new TestParams
+                {
+                    Targets =
+                    [
+                        new BuildTargetIdentifier
+                        {
+                            Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.XunitTests, "xunit-tests.csproj")),
+                        }
+                    ],
+                    DataKind = TestParamsDataKinds.DotnetTest,
+                    Data = new DotnetTestParamsData
+                    {
+                        Filter = "id==ad63df2419d6468c651b48434dca4f7f",
+                    },
+                    OriginId = Guid.NewGuid().ToString(),
+                },
+                1
+            },
+            new object[]
+            {
+                TestProject.NunitTests,
+                new TestParams
+                {
+                    Targets =
+                    [
+                        new BuildTargetIdentifier
+                        {
+                            Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.NunitTests, "nunit-tests.csproj")),
+                        }
+                    ],
+                    OriginId = Guid.NewGuid().ToString(),
+                },
+                3
+            },
+            new object[]
+            {
+                TestProject.NunitTests,
+                new TestParams
+                {
+                    Targets =
+                    [
+                        new BuildTargetIdentifier
+                        {
+                            Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.NunitTests, "nunit-tests.csproj")),
+                        }
+                    ],
+                    DataKind = TestParamsDataKinds.DotnetTest,
+                    Data = new DotnetTestParamsData
+                    {
+                        Filter = "id==184508b7d754ea96bb09cfe0c139881d",
+                    },
+                    OriginId = Guid.NewGuid().ToString(),
+                },
+                1
+            },
+        };
+    }
+
+    [Theory]
+    [MemberData(nameof(TestDataRunTest))]
+    public async Task RequestBuildTargetTest_ForTestableBuildTarget_Success(
+        string testProjectName,
+        TestParams testParams,
+        int expectedTestsRunCount)
+    {
+        var testProjectPath = TestProjectPath.GetFullPathFor(testProjectName);
+
+        CleanupOutputDirectories(testProjectPath);
+
+        _ = await _client.BuildInitializeAsync(testProjectPath, _cancellationToken);
+        await _client.BuildInitializedAsync();
+
+        // Act
+        var result = await _client.BuildTargetTestAsync(testParams, _cancellationToken);
+
+        // Assert
+        Assert.Equal(testParams.OriginId, result.OriginId);
+        Assert.Equal(StatusCode.Ok, result.StatusCode);
+        var taskStart = _serverCallbacks.TaskNotifications
+            .OfType<TaskStartParams>()
+            .SingleOrDefault(x => x.DataKind == TaskStartDataKind.TestTask);
+        Assert.NotNull(taskStart);
+
+        var tasksProcessingTestResult = _serverCallbacks.TaskNotifications
+            .OfType<TaskProgressParams>()
+            .Where(x => x.TaskId.Id == taskStart.TaskId.Id);
+        Assert.Equal(expectedTestsRunCount, tasksProcessingTestResult.Count());
+
+        var testTasksStart = _serverCallbacks.TaskNotifications
+            .OfType<TaskStartParams>()
+            .Where(x => x.DataKind == TaskStartDataKind.TestStart);
+        Assert.Equal(expectedTestsRunCount, testTasksStart.Count());
+
+        var testTasksFinish = _serverCallbacks.TaskNotifications
+            .OfType<TaskFinishParams>()
+            .Where(x => x.DataKind == TaskFinishDataKind.TestFinish);
+        Assert.Equal(expectedTestsRunCount, testTasksFinish.Count());
+
+        var taskFinish = _serverCallbacks.TaskNotifications
+            .OfType<TaskFinishParams>()
+            .SingleOrDefault(x => x.DataKind == TaskFinishDataKind.TestReport);
+        Assert.NotNull(taskFinish);
     }
 
     private void CleanupOutputDirectories(string testProjectPath)

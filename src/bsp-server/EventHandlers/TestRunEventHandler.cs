@@ -200,11 +200,11 @@ public class TestRunEventHandler : ITestRunEventsHandler
                         DisplayName = testResult.TestCase.FullyQualifiedName,
                         Location = location,
                     },
-                    Message = $"Run Test: {testResult.TestCase.FullyQualifiedName}",
+                    Message = $"Test started: {testResult.TestCase.FullyQualifiedName}",
                     EventTime = testResult.StartTime.ToUnixTimeMilliseconds(),
                 };
                 _ = _baseProtocolClientManager.SendNotificationAsync(
-                    Methods.BuildTaskFinish, taskTestStart, CancellationToken.None);
+                    Methods.BuildTaskStart, taskTestStart, CancellationToken.None);
                 var taskTestFinish = new TaskFinishParams
                 {
                     TaskId = testTaskId,
@@ -220,7 +220,7 @@ public class TestRunEventHandler : ITestRunEventsHandler
                         Status = ConvertTestOutcome(testResult.Outcome),
                         Location = location
                     },
-                    Message = $"Test run finished: {testResult.TestCase.FullyQualifiedName}",
+                    Message = $"Test finished: {testResult.TestCase.FullyQualifiedName}",
                     EventTime = testResult.EndTime.ToUnixTimeMilliseconds(),
                 };
                 _ = _baseProtocolClientManager.SendNotificationAsync(
