@@ -43,7 +43,7 @@ internal static class BuildHelper
         IBpLogger logger,
         MSBuildLogger msBuildLogger)
     {
-        bool restoreResult = false;
+        bool restoreResult = true;
         var graph = new ProjectGraph(targetFiles, projects);
         var testProjects = graph.ProjectNodesTopologicallySorted
             .Where(x => x.ProjectInstance.IsTestProject());
@@ -68,7 +68,7 @@ internal static class BuildHelper
         IBpLogger logger,
         MSBuildLogger msBuildLogger)
     {
-        bool buildResult = false;
+        bool buildResult = true;
         var graph = new ProjectGraph(targetFiles, projects);
         var testProjects = graph.ProjectNodesTopologicallySorted
             .Where(x => x.ProjectInstance.IsTestProject());

@@ -34,7 +34,7 @@ internal partial class BuildTargetTestHandler
     {
         _initializeManager.EnsureInitialized();
 
-        var testResult = false;
+        var testResult = true;
         var initParams = _initializeManager.GetInitializeParams();
 
         if (initParams.RootUri.IsFile)
@@ -109,17 +109,14 @@ internal partial class BuildTargetTestHandler
         var proj = projects.LoadProject(projectFile);
         if (!projectTargets.ContainsKey(proj.FullPath))
         {
-            if (testParams.DataKind == TestParamsDataKinds.DotnetTest)
+            JObject? testData = null;
+            if (testParams.DataKind == TestParamsDataKinds.DotnetTest &&
+                testParams.Data is JObject data)
             {
-                if (testParams.Data is JObject testData)
-                {
-                    projectTargets[proj.FullPath] = testData;
-                }
-                else if (testParams.Data is null)
-                {
-                    projectTargets[proj.FullPath] = null;
-                }
+                testData = data;
             }
+
+            projectTargets[proj.FullPath] = testData;
         }
     }
 
@@ -155,7 +152,6 @@ internal partial class BuildTargetTestHandler
         consoleWrapper.StartSession();
         consoleWrapper.InitializeExtensions(new List<string>() { testAdapterPath });
 
-        var waitHandle = new AutoResetEvent(false);
         var defaultRunSettings =
             """
             <RunSettings>
@@ -171,10 +167,9 @@ internal partial class BuildTargetTestHandler
         {
             Uri = UriFixer.WithFileSchema(proj.FullPath)
         };
-        var runHandler = new TestRunEventHandler(waitHandle, originId, buildTargetIdentifier, _baseProtocolClientManager);
-
         if (!string.IsNullOrEmpty(testCaseFilter))
         {
+            var waitHandle = new AutoResetEvent(false);
             var discoveryHandler = new TestDiscoveryEventHandler(waitHandle, buildTargetIdentifier, originId, _baseProtocolClientManager);
             consoleWrapper.DiscoverTests(targets, defaultRunSettings, discoveryHandler);
             waitHandle.WaitOne();
@@ -182,15 +177,19 @@ internal partial class BuildTargetTestHandler
             var matchedTestCases = MatchTestCasesByFilter(testCaseFilter, context, discoveryHandler);
 
             waitHandle = new AutoResetEvent(false);
+            var runHandler = new TestRunEventHandler(waitHandle, originId, buildTargetIdentifier, _baseProtocolClientManager);
             consoleWrapper.RunTests(matchedTestCases, defaultRunSettings, runHandler);
+            waitHandle.WaitOne();
         }
         else
         {
+            var waitHandle = new AutoResetEvent(false);
+            var runHandler = new TestRunEventHandler(waitHandle, originId, buildTargetIdentifier, _baseProtocolClientManager);
             context.Logger.LogInformation("Run test targets: {}", targets);
             consoleWrapper.RunTests(targets, defaultRunSettings, runHandler);
+            waitHandle.WaitOne();
         }
 
-        waitHandle.WaitOne();
         consoleWrapper.EndSession();
     }
 
