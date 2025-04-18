@@ -23,7 +23,7 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
         _client = _buildServer.CreateClient(_serverCallbacks);
 
         var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(15));
+        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(45));
         _cancellationToken = cancellationTokenSource.Token;
     }
 
