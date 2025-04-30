@@ -36,8 +36,7 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
         var buildResult = true;
         var testCaseDiscoveryResult = true;
 
-        var targetFiles = BuildHelper.FilterProjectsOutIfPartOfAnSolutionTarget(testCaseDiscoveryParams.Targets)
-            .Select(x => x.ToString());
+        var targetFiles = BuildHelper.ExtractProjectsFromSolutions(testCaseDiscoveryParams.Targets);
         var initParams = _initializeManager.GetInitializeParams();
         if (initParams.RootUri.IsFile)
         {

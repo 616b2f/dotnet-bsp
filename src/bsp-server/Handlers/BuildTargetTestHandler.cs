@@ -1,15 +1,15 @@
 using BaseProtocol;
 using bsp4csharp.Protocol;
-using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 using dotnet_bsp.Logging;
 using Microsoft.TestPlatform.VsTestConsole.TranslationLayer;
 using Microsoft.TestPlatform.VsTestConsole.TranslationLayer.Interfaces;
 using TestResult = bsp4csharp.Protocol.TestResult;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
 using Newtonsoft.Json.Linq;
 using dotnet_bsp.EventHandlers;
 using System.Text.RegularExpressions;
+using Microsoft.Build.Graph;
+using Microsoft.Build.Execution;
 
 namespace dotnet_bsp.Handlers;
 
@@ -39,27 +39,23 @@ internal partial class BuildTargetTestHandler
 
         if (initParams.RootUri.IsFile)
         {
-            var projectTargets = new Dictionary<string, JObject?>();
-
-            var testTargetFiles = BuildHelper
-                .FilterProjectsOutIfPartOfAnSolutionTarget(testParams.Targets)
-                .Select(x => x.ToString());
-
-            var projects = new ProjectCollection();
-            foreach (var target in testTargetFiles)
-            {
-                HandleProject(testParams, projects, target, projectTargets);
-            }
-
             var workspacePath = initParams.RootUri.LocalPath;
             context.Logger.LogInformation("Get loaded test projects from {}", workspacePath);
+
+            var testTargetFiles = BuildHelper.ExtractProjectsFromSolutions(testParams.Targets);
+            var projects = new ProjectCollection();
+
+            var graph = new ProjectGraph(testTargetFiles, projects);
+            var testProjects = graph.ProjectNodesTopologicallySorted
+                .Where(x => x.ProjectInstance.IsTestProject());
+
+            context.Logger.LogInformation("Projects in use {}", string.Join(",", testTargetFiles));
 
             _baseProtocolClientManager.SendClearDiagnosticsMessage();
 
             var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testParams.OriginId, workspacePath);
             testResult &= BuildHelper.RestoreTestTargets(
-                testTargetFiles,
-                projects,
+                testProjects,
                 context.Logger,
                 msBuildLogger);
 
@@ -67,24 +63,30 @@ internal partial class BuildTargetTestHandler
             {
                 msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testParams.OriginId, workspacePath);
                 testResult &= BuildHelper.BuildTestTargets(
-                    testTargetFiles,
-                    projects,
+                    testProjects,
                     context.Logger,
                     msBuildLogger);
             }
 
             if (testResult)
             {
-                foreach (var projectTarget in projectTargets)
+                JObject? testParamsData = null;
+                if (testParams.DataKind == TestParamsDataKinds.DotnetTest &&
+                    testParams.Data is JObject data)
                 {
-                    var proj = projects.LoadProject(projectTarget.Key);
+                    testParamsData = data;
+                }
+
+                foreach (var testProject in testProjects)
+                {
                     msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testParams.OriginId, workspacePath);
 
+                    var proj = testProject.ProjectInstance;
                     context.Logger.LogInformation("Start test target: {}", proj.ProjectFileLocation);
                     var targetPath = proj.Properties.First(x => x.Name == "TargetPath").EvaluatedValue;
                     context.Logger.LogInformation("targetPath: {}", targetPath);
 
-                    var dotnetTestParamsData = projectTarget.Value?.ToObject<DotnetTestParamsData>();
+                    var dotnetTestParamsData = testParamsData?.ToObject<DotnetTestParamsData>();
                     if (dotnetTestParamsData is not null)
                     {
                         RunAllTests(proj, [targetPath], testParams.OriginId, dotnetTestParamsData.RunSettings, dotnetTestParamsData.Filter, context, msBuildLogger);
@@ -104,10 +106,9 @@ internal partial class BuildTargetTestHandler
         });
     }
 
-    private void HandleProject(TestParams testParams, ProjectCollection projects, string projectFile, Dictionary<string, JObject?> projectTargets)
+    private void HandleTestProject(TestParams testParams, ProjectInstance project, Dictionary<string, JObject?> projectTargets)
     {
-        var proj = projects.LoadProject(projectFile);
-        if (!projectTargets.ContainsKey(proj.FullPath))
+        if (project.IsTestProject() && !projectTargets.ContainsKey(project.FullPath))
         {
             JObject? testData = null;
             if (testParams.DataKind == TestParamsDataKinds.DotnetTest &&
@@ -116,11 +117,11 @@ internal partial class BuildTargetTestHandler
                 testData = data;
             }
 
-            projectTargets[proj.FullPath] = testData;
+            projectTargets[project.FullPath] = testData;
         }
     }
 
-    private void RunAllTests(Project proj, IEnumerable<string> targets, string? originId, string? testRunSettings, string testCaseFilter, RequestContext context, MSBuildLogger msBuildLogger)
+    private void RunAllTests(ProjectInstance proj, IEnumerable<string> targets, string? originId, string? testRunSettings, string testCaseFilter, RequestContext context, MSBuildLogger msBuildLogger)
     {
         var outputPath = proj.Properties.First(x => x.Name == "OutputPath").EvaluatedValue;
         context.Logger.LogInformation("outputPath: {}", outputPath);
