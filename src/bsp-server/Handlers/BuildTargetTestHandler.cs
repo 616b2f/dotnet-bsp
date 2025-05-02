@@ -45,17 +45,14 @@ internal partial class BuildTargetTestHandler
             var testTargetFiles = BuildHelper.ExtractProjectsFromSolutions(testParams.Targets);
             var projects = new ProjectCollection();
 
-            var graph = new ProjectGraph(testTargetFiles, projects);
-            var testProjects = graph.ProjectNodesTopologicallySorted
-                .Where(x => x.ProjectInstance.IsTestProject());
-
             context.Logger.LogInformation("Projects in use {}", string.Join(",", testTargetFiles));
 
             _baseProtocolClientManager.SendClearDiagnosticsMessage();
 
             var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testParams.OriginId, workspacePath);
             testResult &= BuildHelper.RestoreTestTargets(
-                testProjects,
+                testTargetFiles,
+                projects,
                 context.Logger,
                 msBuildLogger);
 
@@ -63,7 +60,8 @@ internal partial class BuildTargetTestHandler
             {
                 msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testParams.OriginId, workspacePath);
                 testResult &= BuildHelper.BuildTestTargets(
-                    testProjects,
+                    testTargetFiles,
+                    projects,
                     context.Logger,
                     msBuildLogger);
             }
@@ -77,6 +75,9 @@ internal partial class BuildTargetTestHandler
                     testParamsData = data;
                 }
 
+                var graph = new ProjectGraph(testTargetFiles, projects);
+                var testProjects = graph.ProjectNodesTopologicallySorted
+                    .Where(x => x.ProjectInstance.IsTestProject());
                 foreach (var testProject in testProjects)
                 {
                     msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, testParams.OriginId, workspacePath);
