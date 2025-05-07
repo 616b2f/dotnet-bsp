@@ -9,6 +9,7 @@ public static class TestProject
     public const string XunitTests = "xunit-tests";
     public const string NunitTests = "nunit-tests";
     public const string MsTestTests = "mstest-tests";
+    public const string MsTestSlnTests = "mstest-sln-tests";
 }
 
 internal static class TestProjectPath
@@ -20,6 +21,7 @@ internal static class TestProjectPath
     public static string XunitTests = GetFullPathFor(TestProject.XunitTests);
     public static string NunitTests = GetFullPathFor(TestProject.NunitTests);
     public static string MsTestTests = GetFullPathFor(TestProject.MsTestTests);
+    public static string MsTestSlnTests = GetFullPathFor(TestProject.MsTestSlnTests);
 
     public static string GetFullPathFor(string testProjectDir, string projectName)
     {

@@ -39,7 +39,7 @@ internal partial class WorkspaceBuildTargetsHandler
     private IReadOnlyList<BuildTarget> GetBuildTargetsInWorkspace(string workspacePath, IBpLogger logger)
     {
         var list = new List<BuildTarget>();
-        logger.LogInformation("Search solutin files in: {}", workspacePath);
+        logger.LogInformation("Search solution files in: {}", workspacePath);
         //TODO: think about the implications to search for all sln files in workspace
         var slnFilePath = Directory
             .GetFiles(workspacePath, "*.sln")

@@ -3,38 +3,38 @@ using bsp4csharp.Protocol;
 using dotnet_bsp.Logging;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
+using Microsoft.Build.Execution;
 using Microsoft.Build.Graph;
 
 namespace dotnet_bsp;
 
 internal static class BuildHelper
 {
-    internal static IEnumerable<BuildTargetIdentifier> FilterProjectsOutIfPartOfAnSolutionTarget(BuildTargetIdentifier[] targets)
+    internal static IEnumerable<string> ExtractProjectsFromSolutions(BuildTargetIdentifier[] targets)
     {
-        var filteredTargets = targets.ToList();
-        var slnList = targets
-            .Where(x => Path.GetExtension(x.ToString()) == ".sln");
         var projList = targets
             .Where(x => Path.GetExtension(x.ToString()) == ".csproj")
             .Select(x => x.Uri.AbsolutePath)
             .ToList();
+        var slnList = targets
+            .Where(x => Path.GetExtension(x.ToString()) == ".sln");
         foreach (var target in slnList)
         {
             var slnFile = SolutionFile.Parse(target.ToString());
             if (slnFile is not null)
             {
                 var projectFilesInSln = slnFile.ProjectsInOrder
+                    .Where(x =>
+                        x.ProjectType is
+                            SolutionProjectType.KnownToBeMSBuildFormat or 
+                            SolutionProjectType.WebProject)
                     .Select(x => x.AbsolutePath);
-
-                var includedProj = projectFilesInSln
-                    .Intersect(projList);
-
-                filteredTargets
-                    .RemoveAll(x => includedProj.Contains(x.Uri.AbsolutePath));
+                projList.AddRange(projectFilesInSln);
             }
         }
 
-        return filteredTargets;
+        return projList
+            .Distinct();
     }
 
     internal static bool RestoreTestTargets(

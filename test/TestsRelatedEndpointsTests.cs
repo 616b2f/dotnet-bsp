@@ -217,6 +217,22 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
         {
             new object[]
             {
+                TestProject.MsTestSlnTests,
+                new TestParams
+                {
+                    Targets =
+                    [
+                        new BuildTargetIdentifier
+                        {
+                            Uri = UriFixer.WithFileSchema(Path.Combine(TestProjectPath.MsTestSlnTests, "mstest-sln-tests.sln")),
+                        }
+                    ],
+                    OriginId = Guid.NewGuid().ToString(),
+                },
+                3
+            },
+            new object[]
+            {
                 TestProject.MsTestTests,
                 new TestParams
                 {
