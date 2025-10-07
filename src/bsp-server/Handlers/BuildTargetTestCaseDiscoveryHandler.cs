@@ -123,7 +123,14 @@ internal partial class BuildTargetTestCaseDiscoveryHandler
         consoleWrapper.InitializeExtensions(new List<string>() { testAdapterPath });
 
         var waitHandle = new AutoResetEvent(false);
-        var defaultRunSettings = "<RunSettings><RunConfiguration></RunConfiguration></RunSettings>";
+        var defaultRunSettings =
+            """
+            <RunSettings>
+                <RunConfiguration>
+                    <BatchSize>1500</BatchSize>
+                </RunConfiguration>
+            </RunSettings>
+            """;
 
         var buildTarget = new BuildTargetIdentifier { Uri = UriFixer.WithFileSchema(proj.FullPath) };
         var discoveryHandler = new TestDiscoveryEventHandler(waitHandle, buildTarget, originId, _baseProtocolClientManager);
