@@ -3,7 +3,6 @@ using bsp4csharp.Protocol;
 using dotnet_bsp.Logging;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
-using Microsoft.Build.Execution;
 using Microsoft.Build.Graph;
 
 namespace dotnet_bsp;
