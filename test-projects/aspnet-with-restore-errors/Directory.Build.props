@@ -1,0 +1,3 @@
+<Project>
+    <!-- added to ignore the Directory.Build.props from the root of workspace -->
+</Project>
