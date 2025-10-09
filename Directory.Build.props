@@ -1,0 +1,24 @@
+<Project>
+  <!-- See https://aka.ms/dotnet/msbuild/customize for more details on customizing your build -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SuggestedBindingRedirects Include="Microsoft.Build, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <MaxVersion>15.8.0.0</MaxVersion>
+    </SuggestedBindingRedirects>
+    <SuggestedBindingRedirects Include="Microsoft.Build.Framework, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <MaxVersion>15.8.0.0</MaxVersion>
+    </SuggestedBindingRedirects>
+    <SuggestedBindingRedirects Include="Microsoft.Build.Utilities.Core, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <MaxVersion>15.8.0.0</MaxVersion>
+    </SuggestedBindingRedirects>
+    <SuggestedBindingRedirects Include="Microsoft.Build.Tasks.Core, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <MaxVersion>15.8.0.0</MaxVersion>
+    </SuggestedBindingRedirects>
+  </ItemGroup>
+</Project>
