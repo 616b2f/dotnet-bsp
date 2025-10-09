@@ -147,9 +147,9 @@
       },
       "System.CommandLine": {
         "type": "Direct",
-        "requested": "[2.0.0-beta4.25168.1, )",
-        "resolved": "2.0.0-beta4.25168.1",
-        "contentHash": "3h9SNmiMrVUa6e7XqHBpqriGreqp4jrpiGoiy0Y8nPpoIOnueH6x8RkOAjBAKT3tJfXprXOb698wlXRTLN11UA=="
+        "requested": "[2.0.0-beta4.24528.1, )",
+        "resolved": "2.0.0-beta4.24528.1",
+        "contentHash": "Xt8tsSU8yd0ZpbT9gl5DAwkMYWLo8PV1fq2R/belrUbHVVOIKqhLfbWksbdknUDpmzMHZenBtD6AGAp9uJTa2w=="
       },
       "System.ComponentModel.Composition": {
         "type": "Direct",
