@@ -14,8 +14,13 @@ internal class MSBuildLogger(IBaseProtocolClientManager baseProtocolClientManage
     private readonly ICollection<string> _diagnosticKeysCollection = [];
     private int Warnings = 0;
     private int Errors = 0;
-    private readonly DateTime _buildStartTimestamp;
-    private readonly string[] _targetsOfInterest = ["Clean", "Build", "Restore"];
+    private TimeProvider _timeProvider = TimeProvider.System;
+    private DateTimeOffset _buildStartTimestamp;
+    private readonly string[] _targetsOfInterest = [
+        "Clean",
+        "Build",
+        "Restore",
+    ];
 
     public LoggerVerbosity Verbosity { get; set; } = LoggerVerbosity.Normal;
 
@@ -36,8 +41,12 @@ internal class MSBuildLogger(IBaseProtocolClientManager baseProtocolClientManage
 
     private void TargetStarted(object sender, TargetStartedEventArgs e)
     {
-        if (_targetsOfInterest.Contains(e.TargetName, StringComparer.InvariantCultureIgnoreCase) &&
-            e.BuildReason == TargetBuiltReason.None)
+        if (_buildStartTimestamp == null)
+        {
+            _buildStartTimestamp = _timeProvider.GetUtcNow();
+        }
+
+        if (_targetsOfInterest.Contains(e.TargetName, StringComparer.InvariantCultureIgnoreCase))
         {
             var taskId = new TaskId { Id = e.ProjectFile + "#" + e.TargetName + "#" + e.ThreadId };
             var taskStartParams = new TaskStartParams
