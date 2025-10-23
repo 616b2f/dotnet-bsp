@@ -1,6 +1,19 @@
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
 
+# Unix-style newlines with a newline ending every file
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+[*.{json,xml}]
+indent_style = space
+indent_size = 2
+
+[nuget.config]
+indent_style = space
+indent_size = 2
+
 [*{Test,Tests}.cs]
 # Anonymous function can be made static
 dotnet_diagnostic.IDE0320.severity = none

@@ -1,5 +1,6 @@
 using BaseProtocol;
 using bsp4csharp.Protocol;
+using Microsoft.Build.Execution;
 
 namespace dotnet_bsp;
 
@@ -32,6 +33,11 @@ internal class BuildInitializeManager : IInitializeManager<InitializeBuildParams
         };
 
         return initializeResult;
+    }
+
+    public BuildManager GetBuildManager()
+    {
+        return BuildManager.DefaultBuildManager;
     }
 
     public InitializeBuildParams GetInitializeParams()
