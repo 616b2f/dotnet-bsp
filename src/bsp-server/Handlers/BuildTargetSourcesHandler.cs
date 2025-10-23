@@ -22,29 +22,34 @@ internal class BuildTargetSourcesHandler
         _initializeManager.EnsureInitialized();
 
         var items = new List<SourcesItem>();
-        foreach (var target in sourcesParams.Targets)
+        var targetFiles = BuildHelper.ExtractProjectsFromSolutions(sourcesParams.Targets);
+        foreach (var targetFile in targetFiles)
         {
-            if (target.ToString().EndsWith(".csproj"))
+            if (targetFile.EndsWith(".csproj"))
             {
                 var pcol = new ProjectCollection();
-                var proj = pcol.LoadProject(target.ToString());
+                var proj = pcol.LoadProject(targetFile);
                 var documents = proj.GetItems("Compile");
+
+                var rootDir = Path.GetDirectoryName(targetFile);
 
                 var sources = new List<SourceItem>();
                 foreach (var document in documents)
                 {
+                    var path = Path.GetFullPath(Path.Combine("./", document.EvaluatedInclude), rootDir ?? "/");
+                    context.Logger.LogInformation("Document: {0}", path);
                     sources.Add(new SourceItem
                     {
-                        Uri = UriFixer.WithFileSchema(document.EvaluatedInclude),
+                        Uri = UriFixer.WithFileSchema(path),
                         Kind = SourceItemKind.File,
                         Generated = false
                     });
                 }
-                var rootDir = Path.GetDirectoryName(target.ToString());
+
                 Uri[] roots = (rootDir != null) ? [UriFixer.WithFileSchema(rootDir)] : [];
                 var sourcesItem = new SourcesItem
                 {
-                    Target = target,
+                    Target = new BuildTargetIdentifier { Uri = UriFixer.WithFileSchema(targetFile) },
                     Sources = sources.ToArray(),
                     Roots = roots
                 };
