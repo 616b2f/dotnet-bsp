@@ -1,8 +1,9 @@
 using BaseProtocol;
 using bsp4csharp.Protocol;
 using Microsoft.Build.Evaluation;
-using dotnet_bsp.Logging;
+using Microsoft.Build.Execution;
 using Microsoft.Build.Graph;
+using dotnet_bsp.Logging;
 
 namespace dotnet_bsp.Handlers;
 
@@ -23,7 +24,7 @@ internal class BuildTargetCompileHandler(
 
         var projects = new ProjectCollection();
         var buildResult = true;
-        var targetFiles = compileParams.Targets.Select(x => x.ToString());
+        var targetFiles = BuildHelper.ExtractProjectsFromSolutions(compileParams.Targets);
         var graph = new ProjectGraph(targetFiles, projects);
         var initParams = _initializeManager.GetInitializeParams();
         if (initParams.RootUri.IsFile)
@@ -32,27 +33,24 @@ internal class BuildTargetCompileHandler(
             context.Logger.LogInformation("GetLoadedProjects from {}", workspacePath);
             _baseProtocolClientManager.SendClearDiagnosticsMessage();
 
-            foreach (var proj in graph.ProjectNodesTopologicallySorted)
-            {
-                var globalProps = proj.ProjectInstance.GlobalProperties
-                    .Select(x => string.Format("{0}={1}", x.Key, x.Value))
-                    .ToArray();
-                context.Logger.LogInformation("Global Properties: {}", string.Join("\n", globalProps));
-                context.Logger.LogInformation("Start restore target: {}", proj.ProjectInstance.FullPath);
-                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, compileParams.OriginId, workspacePath);
-                var result = proj.ProjectInstance.Build(["Restore"], [msBuildLogger]);
-                context.Logger.LogInformation($"{proj.ProjectInstance.FullPath} restore result: {result}");
-                buildResult &= result;
-            }
+            var buildManager = _initializeManager.GetBuildManager();
+            buildManager.BeginBuild(new BuildParameters
+                {
+                    Loggers = [
+                        new MSBuildLogger(_baseProtocolClientManager, compileParams.OriginId, workspacePath)
+                    ],
+                },
+                []);
 
-            foreach (var proj in graph.ProjectNodesTopologicallySorted)
-            {
-                context.Logger.LogInformation("Start building target: {}", proj.ProjectInstance.FullPath);
-                var msBuildLogger = new MSBuildLogger(_baseProtocolClientManager, compileParams.OriginId, workspacePath);
-                var result = proj.ProjectInstance.Build(["Build"], [msBuildLogger]);
-                context.Logger.LogInformation($"{proj.ProjectInstance.FullPath} build result: {result}");
-                buildResult &= result;
-            }
+            context.Logger.LogInformation("Start restore targets: {}", targetFiles);
+            var graphRestoreResult = buildManager.BuildRequest(new GraphBuildRequestData(graph, ["Restore"]));
+            context.Logger.LogInformation("Restore result: {}", graphRestoreResult.OverallResult);
+            buildResult &= (graphRestoreResult.OverallResult == BuildResultCode.Success);
+            context.Logger.LogInformation("Start building targets: {}", targetFiles);
+            var graphBuildResult = buildManager.BuildRequest(new GraphBuildRequestData(graph, ["Build"]));
+            context.Logger.LogInformation("Build result: {}", graphBuildResult.OverallResult);
+            buildResult &= (graphBuildResult.OverallResult == BuildResultCode.Success);
+            buildManager.EndBuild();
         }
 
         return Task.FromResult(new CompileResult
