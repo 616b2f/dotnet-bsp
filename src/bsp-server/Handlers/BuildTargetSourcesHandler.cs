@@ -22,16 +22,16 @@ internal class BuildTargetSourcesHandler
         _initializeManager.EnsureInitialized();
 
         var items = new List<SourcesItem>();
-        // TODO: handling for .sln targets is not implemented
-        foreach (var target in sourcesParams.Targets)
+        var targetFiles = BuildHelper.ExtractProjectsFromSolutions(sourcesParams.Targets);
+        foreach (var targetFile in targetFiles)
         {
-            if (target.ToString().EndsWith(".csproj"))
+            if (targetFile.EndsWith(".csproj"))
             {
                 var pcol = new ProjectCollection();
-                var proj = pcol.LoadProject(target.ToString());
+                var proj = pcol.LoadProject(targetFile);
                 var documents = proj.GetItems("Compile");
 
-                var rootDir = Path.GetDirectoryName(target.ToString());
+                var rootDir = Path.GetDirectoryName(targetFile);
 
                 var sources = new List<SourceItem>();
                 foreach (var document in documents)
@@ -49,7 +49,7 @@ internal class BuildTargetSourcesHandler
                 Uri[] roots = (rootDir != null) ? [UriFixer.WithFileSchema(rootDir)] : [];
                 var sourcesItem = new SourcesItem
                 {
-                    Target = target,
+                    Target = new BuildTargetIdentifier { Uri = UriFixer.WithFileSchema(targetFile) },
                     Sources = sources.ToArray(),
                     Roots = roots
                 };
