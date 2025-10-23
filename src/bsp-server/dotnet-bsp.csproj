@@ -8,6 +8,8 @@
 
     <!-- Always run on the latest runtime installed. -->
     <RollForward>LatestMajor</RollForward>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <SkipHostDlls>true</SkipHostDlls>
   </PropertyGroup>
 
   <ItemGroup>
