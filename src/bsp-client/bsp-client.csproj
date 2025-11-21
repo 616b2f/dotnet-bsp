@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>bsp_client</RootNamespace>
+  </PropertyGroup>
+
+</Project>

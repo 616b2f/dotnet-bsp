@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\bsp-server\dotnet-bsp.csproj" />
+    <ProjectReference Include="..\src\bsp-client\bsp-client.csproj" />
   </ItemGroup>
 
 </Project>

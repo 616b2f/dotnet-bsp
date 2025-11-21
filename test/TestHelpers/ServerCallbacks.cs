@@ -2,10 +2,11 @@ using bsp4csharp.Protocol;
 using StreamJsonRpc;
 using Xunit.Abstractions;
 using Microsoft.Extensions.Logging;
+using bsp_client;
 
 namespace test;
 
-public class ServerCallbacks(ITestOutputHelper testOutputHelper, LogLevel logLevel = LogLevel.Warning)
+public class ServerCallbacks(ITestOutputHelper testOutputHelper, LogLevel logLevel = LogLevel.Warning) : IServerCallbacks
 {
     private readonly List<Diagnostic> _diagnosticsCollection = [];
     public IReadOnlyCollection<Diagnostic> Diagnostics => _diagnosticsCollection.AsReadOnly();

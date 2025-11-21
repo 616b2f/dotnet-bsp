@@ -3,6 +3,7 @@ using dotnet_bsp;
 using dotnet_bsp.Handlers;
 using Newtonsoft.Json.Linq;
 using Xunit.Abstractions;
+using bsp_client;
 
 namespace test;
 
@@ -149,7 +150,8 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
 
         CleanupOutputDirectories(testProjectPath);
 
-        _ = await _client.BuildInitializeAsync(testProjectPath, _cancellationToken);
+        var initParams = TestData.GetInitParams(testProjectPath);
+        _ = await _client.BuildInitializeAsync(initParams, _cancellationToken);
         await _client.BuildInitializedAsync();
 
         var buildTargets = await _client.WorkspaceBuildTargetsAsync(_cancellationToken);
@@ -356,7 +358,8 @@ public partial class TestsRelatedEndpointsTests : IAsyncLifetime
 
         CleanupOutputDirectories(testProjectPath);
 
-        _ = await _client.BuildInitializeAsync(testProjectPath, _cancellationToken);
+        var initParams = TestData.GetInitParams(testProjectPath);
+        _ = await _client.BuildInitializeAsync(initParams, _cancellationToken);
         await _client.BuildInitializedAsync();
 
         // Act

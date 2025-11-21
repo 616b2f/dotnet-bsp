@@ -1,5 +1,7 @@
-namespace test;
+using bsp4csharp.Protocol;
+using dotnet_bsp;
 
+namespace test;
 
 public static class TestProject
 {
@@ -10,6 +12,24 @@ public static class TestProject
     public const string NunitTests = "nunit-tests";
     public const string MsTestTests = "mstest-tests";
     public const string MsTestSlnTests = "mstest-sln-tests";
+}
+
+internal static class TestData
+{
+    internal static InitializeBuildParams GetInitParams(string workspaceRootPath)
+    {
+        return new InitializeBuildParams
+        {
+            DisplayName = "TestClient",
+            Version = "1.0.0",
+            BspVersion = "2.1.1",
+            RootUri = UriFixer.WithFileSchema(workspaceRootPath),
+            Capabilities = new BuildClientCapabilities
+            {
+                LanguageIds = ["csharp"]
+            }
+        };
+    }
 }
 
 internal static class TestProjectPath
