@@ -9,7 +9,6 @@
     <!-- Always run on the latest runtime installed. -->
     <RollForward>LatestMajor</RollForward>
     <PreserveCompilationContext>true</PreserveCompilationContext>
-    <SkipHostDlls>true</SkipHostDlls>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +20,7 @@
     <PackageReference Include="Microsoft.Build.Framework" ExcludeAssets="Runtime" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Build.Tasks.Core" ExcludeAssets="Runtime" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Build.Utilities.Core" ExcludeAssets="Runtime" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NET.StringTools" ExcludeAssets="Runtime" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Build.Locator" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
