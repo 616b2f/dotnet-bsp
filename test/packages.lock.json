@@ -275,7 +275,7 @@
       "dotnet-bsp": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.Build.Locator": "[1.10.12, )",
+          "Microsoft.Build.Locator": "[1.11.1, )",
           "Microsoft.Extensions.DependencyModel": "[9.0.11, )",
           "Microsoft.Extensions.Logging": "[9.0.11, )",
           "Microsoft.Extensions.Logging.Abstractions": "[9.0.11, )",
@@ -290,9 +290,9 @@
       },
       "Microsoft.Build.Locator": {
         "type": "CentralTransitive",
-        "requested": "[1.10.12, )",
-        "resolved": "1.10.12",
-        "contentHash": "L4yL8b1oYyoxmFWWpPHqIVb5uGJSDSCd/RQDV5SsJkBRB3fRxSfUl3KYjNQfMdf9RNvoqCDeXaGGISjaY6f8Pg=="
+        "requested": "[1.11.1, )",
+        "resolved": "1.11.1",
+        "contentHash": "22UJmwINBXtbrE783z2K6NaGS9PK3zsUIeg6oDiWBU7LOJOglw3tCLR7jTG7sn/rvzGmxbiK5XVtLbx9ZjSMSg=="
       },
       "Microsoft.Extensions.DependencyInjection": {
         "type": "CentralTransitive",

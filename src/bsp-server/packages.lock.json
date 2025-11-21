@@ -31,9 +31,9 @@
       },
       "Microsoft.Build.Locator": {
         "type": "Direct",
-        "requested": "[1.10.12, )",
-        "resolved": "1.10.12",
-        "contentHash": "L4yL8b1oYyoxmFWWpPHqIVb5uGJSDSCd/RQDV5SsJkBRB3fRxSfUl3KYjNQfMdf9RNvoqCDeXaGGISjaY6f8Pg=="
+        "requested": "[1.11.1, )",
+        "resolved": "1.11.1",
+        "contentHash": "22UJmwINBXtbrE783z2K6NaGS9PK3zsUIeg6oDiWBU7LOJOglw3tCLR7jTG7sn/rvzGmxbiK5XVtLbx9ZjSMSg=="
       },
       "Microsoft.Build.Tasks.Core": {
         "type": "Direct",
