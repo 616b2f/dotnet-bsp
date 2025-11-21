@@ -146,6 +146,16 @@
         "resolved": "10.0.0",
         "contentHash": "mRm09VxzL7aAErZzjBnX4Kag1kCWFbHiA1xdl2jQi9Dc9zeAcqXV4KC8VHe0kk8VSRMtNDlYLOnw6BiZiZ7pUA=="
       },
+      "System.Configuration.ConfigurationManager": {
+        "type": "Direct",
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "0B+BzJ6pPMrRzJrVsttKf9MfDj6Syw9xoY+agcS9VssYQali1446+jTf5v1K94AMFUBxLXqDZlaTjO5edaI3jA==",
+        "dependencies": {
+          "System.Diagnostics.EventLog": "10.0.0",
+          "System.Security.Cryptography.ProtectedData": "10.0.0"
+        }
+      },
       "MessagePack": {
         "type": "Transitive",
         "resolved": "2.5.192",
@@ -403,16 +413,6 @@
           "Nerdbank.Streams": "2.12.87",
           "Newtonsoft.Json": "13.0.3",
           "System.IO.Pipelines": "8.0.0"
-        }
-      },
-      "System.Configuration.ConfigurationManager": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.0, )",
-        "resolved": "10.0.0",
-        "contentHash": "0B+BzJ6pPMrRzJrVsttKf9MfDj6Syw9xoY+agcS9VssYQali1446+jTf5v1K94AMFUBxLXqDZlaTjO5edaI3jA==",
-        "dependencies": {
-          "System.Diagnostics.EventLog": "10.0.0",
-          "System.Security.Cryptography.ProtectedData": "10.0.0"
         }
       }
     }
