@@ -1,22 +1,13 @@
+using System.Threading;
+using System.Threading.Tasks;
 using bsp4csharp.Protocol;
-using dotnet_bsp;
 
-namespace test;
+namespace bsp_client;
 
 public static class BuildServerClientExtensions
 {
-    public static Task<InitializeBuildResult> BuildInitializeAsync(this BuildServerClient client, string workspaceRootPath, CancellationToken cancellationToken)
+    public static Task<InitializeBuildResult> BuildInitializeAsync(this BuildServerClient client, InitializeBuildParams initParams, CancellationToken cancellationToken)
     {
-        var initParams = new InitializeBuildParams
-        {
-            DisplayName = "TestClient",
-            Version = "1.0.0",
-            BspVersion = "2.1.1",
-            RootUri = UriFixer.WithFileSchema(workspaceRootPath),
-            Capabilities = new BuildClientCapabilities()
-        };
-        initParams.Capabilities.LanguageIds.Add("csharp");
-
         return client.SendRequestAsync<InitializeBuildParams, InitializeBuildResult>(Methods.BuildInitialize, initParams, cancellationToken);
     }
 

@@ -1,9 +1,12 @@
 using Microsoft.Extensions.Logging;
+using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
-using bsp_client;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace test;
+namespace bsp_client;
 
 public class BuildServerFactory
 {
@@ -11,32 +14,26 @@ public class BuildServerFactory
     {
     }
 
-    public static TestBuildServer CreateServer(ILogger logger)
+    public static BuildServer CreateServer(BspConnectionDetails connectionDetails, ILogger logger)
     {
-        return new TestBuildServer(logger);
+        return new BuildServer(connectionDetails, logger);
     }
 }
 
-public sealed class TestBuildServer : IDisposable
+public sealed class BuildServer : IDisposable
 {
     private readonly Stream _serverStdin;
     private readonly Stream _serverStdout;
     private readonly Process _process;
     private readonly ILogger _logger;
 
-    public TestBuildServer(ILogger logger)
+    public BuildServer(BspConnectionDetails connectionDetails, ILogger logger)
     {
+        var command = connectionDetails.Argv[0];
+        var args = connectionDetails.Argv[1..];
         _process = new Process
         {
-            StartInfo = new ProcessStartInfo(
-                "dotnet",
-                [
-                    "exec",
-                    Path.Combine(AppContext.BaseDirectory, "dotnet-bsp.dll"),
-                    "--logLevel=Debug",
-                    "--extensionLogDirectory",
-                    "."
-                ])
+            StartInfo = new ProcessStartInfo(command, args)
             {
                 CreateNoWindow = true,
                 RedirectStandardInput = true,
@@ -58,7 +55,9 @@ public sealed class TestBuildServer : IDisposable
         _logger.LogError(e.Data);
     }
 
-    public BuildServerClient CreateClient(IServerCallbacks serverCallbacks, TraceListener? traceListener = null)
+    public BuildServerClient CreateClient(
+        IServerCallbacks serverCallbacks,
+        TraceListener? traceListener = null)
     {
         return new BuildServerClient(_serverStdin, _serverStdout, serverCallbacks, traceListener);
     }

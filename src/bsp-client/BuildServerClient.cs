@@ -1,13 +1,17 @@
 using StreamJsonRpc;
+using System;
 using System.Diagnostics;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace test;
+namespace bsp_client;
 
 public sealed class BuildServerClient : IDisposable
 {
     private readonly JsonRpc _jsonRpc;
 
-    public BuildServerClient(Stream sendingStream, Stream receivingStream, ServerCallbacks serverCallbacks, TraceListener? traceListener = null)
+    public BuildServerClient(Stream sendingStream, Stream receivingStream, IServerCallbacks serverCallbacks, TraceListener? traceListener = null)
     {
         _jsonRpc = new JsonRpc(sendingStream, receivingStream);
         _jsonRpc.AddLocalRpcTarget(serverCallbacks);

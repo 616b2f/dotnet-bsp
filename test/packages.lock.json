@@ -282,6 +282,15 @@
           "StreamJsonRpc": "[2.22.23, )"
         }
       },
+      "bsp-client": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection": "[10.0.0, )",
+          "Microsoft.Extensions.Logging": "[10.0.0, )",
+          "StreamJsonRpc": "[2.22.23, )",
+          "bsp4csharp": "[1.0.0, )"
+        }
+      },
       "bsp4csharp": {
         "type": "Project",
         "dependencies": {
