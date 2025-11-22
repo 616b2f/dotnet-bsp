@@ -117,6 +117,20 @@
         "resolved": "6.1.0",
         "contentHash": "5o/HZxx6RVqYlhKSq8/zronDkALJZUT2Vz0hx43f0gwe8mwlM0y2nYlqdBwLMzr262Bwvpikeb/yEwkAa5PADg=="
       },
+      "bp": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection": "[10.0.0, )",
+          "Microsoft.Extensions.Logging": "[10.0.0, )",
+          "StreamJsonRpc": "[2.22.23, )"
+        }
+      },
+      "bsp4csharp": {
+        "type": "Project",
+        "dependencies": {
+          "bp": "[1.0.0, )"
+        }
+      },
       "Microsoft.Extensions.Logging.Abstractions": {
         "type": "CentralTransitive",
         "requested": "[10.0.0, )",

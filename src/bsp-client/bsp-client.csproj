@@ -10,4 +10,8 @@
     <PackageReference Include="StreamJsonRpc" />
   </ItemGroup>
 
+  <ItemGroup>
+  <ProjectReference Include="../bsp4csharp/bsp4csharp.csproj" />
+  </ItemGroup>
+
 </Project>
