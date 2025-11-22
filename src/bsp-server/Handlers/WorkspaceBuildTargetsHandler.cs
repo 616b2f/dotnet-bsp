@@ -42,7 +42,8 @@ internal partial class WorkspaceBuildTargetsHandler
         logger.LogInformation("Search solution files in: {}", workspacePath);
         //TODO: think about the implications to search for all sln files in workspace
         var slnFilePath = Directory
-            .GetFiles(workspacePath, "*.{slnx,sln}")
+            .GetFiles(workspacePath)
+            .Where(x => BuildHelper.SolutionFileExtensions.Contains(Path.GetExtension(x)))
             .Take(1)
             .SingleOrDefault();
         var projectFiles = new List<string>();
