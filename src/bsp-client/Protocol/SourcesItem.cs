@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.Serialization;
 
 namespace bsp4csharp.Protocol;

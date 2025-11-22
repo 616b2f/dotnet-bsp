@@ -42,7 +42,7 @@ internal partial class WorkspaceBuildTargetsHandler
         logger.LogInformation("Search solution files in: {}", workspacePath);
         //TODO: think about the implications to search for all sln files in workspace
         var slnFilePath = Directory
-            .GetFiles(workspacePath, "*.sln")
+            .GetFiles(workspacePath, "*.{slnx,sln}")
             .Take(1)
             .SingleOrDefault();
         var projectFiles = new List<string>();

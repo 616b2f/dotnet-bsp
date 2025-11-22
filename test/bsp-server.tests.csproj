@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.NET.StringTools" ExcludeAssets="Runtime" PrivateAssets="all" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.analyzers" />
     <PackageReference Include="xunit.runner.visualstudio">
@@ -22,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\bsp-server\dotnet-bsp.csproj" />
+    <!-- <ProjectReference Include="..\src\bsp-server\dotnet-bsp.csproj" /> -->
     <ProjectReference Include="..\src\bsp-client\bsp-client.csproj" />
   </ItemGroup>
 

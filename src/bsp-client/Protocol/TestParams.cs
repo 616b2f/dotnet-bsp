@@ -1,5 +1,7 @@
+using System;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
+using System.Collections.Generic;
 
 namespace bsp4csharp.Protocol;
 

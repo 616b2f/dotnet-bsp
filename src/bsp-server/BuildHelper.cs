@@ -9,6 +9,8 @@ namespace dotnet_bsp;
 
 internal static class BuildHelper
 {
+    private static string[] _solutionFileExtensions = [ ".sln", "slnx" ];
+
     internal static IEnumerable<string> ExtractProjectsFromSolutions(BuildTargetIdentifier[] targets)
     {
         var projList = targets
@@ -16,7 +18,7 @@ internal static class BuildHelper
             .Select(x => x.Uri.AbsolutePath)
             .ToList();
         var slnList = targets
-            .Where(x => Path.GetExtension(x.ToString()) == ".sln");
+            .Where(x => _solutionFileExtensions.Contains(Path.GetExtension(x.ToString())));
         foreach (var target in slnList)
         {
             var slnFile = SolutionFile.Parse(target.ToString());
