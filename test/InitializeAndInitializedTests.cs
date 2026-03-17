@@ -1,5 +1,6 @@
 using StreamJsonRpc;
 using Xunit.Abstractions;
+using bsp_client;
 
 namespace test;
 
@@ -32,7 +33,8 @@ public partial class InitializeAndInitializedTests : IAsyncLifetime
         // Arrange
 
         // Act
-        var initResult = await _client.BuildInitializeAsync(TestProjectPath.AspnetWithoutErrors, _cancellationToken);
+        var initParams = TestData.GetInitParams(TestProjectPath.AspnetWithoutErrors);
+        var initResult = await _client.BuildInitializeAsync(initParams, _cancellationToken);
 
         // Assert
         Assert.Equal("dotnet-bsp", initResult.DisplayName);
@@ -69,7 +71,8 @@ public partial class InitializeAndInitializedTests : IAsyncLifetime
     public async Task Requests_BeforeInitializedBuildNotification_ShouldFail()
     {
         // Arrange
-        _ = await _client.BuildInitializeAsync(TestProjectPath.AspnetWithoutErrors, _cancellationToken);
+        var initParams = TestData.GetInitParams(TestProjectPath.AspnetWithoutErrors);
+        _ = await _client.BuildInitializeAsync(initParams, _cancellationToken);
 
         // Act
         var act = () => _client.WorkspaceBuildTargetsAsync(_cancellationToken);

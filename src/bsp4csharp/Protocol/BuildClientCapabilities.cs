@@ -12,5 +12,5 @@ public class BuildClientCapabilities
     /// languages than those that appear in this list.
     /// </summary>
     [DataMember(Name = "languageIds")]
-    public ICollection<string> LanguageIds { get; } = new List<string>();
+    public ICollection<string> LanguageIds { get; init; } = new List<string>();
 }

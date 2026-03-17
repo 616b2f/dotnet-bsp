@@ -1,6 +1,7 @@
 using bsp4csharp.Protocol;
 using dotnet_bsp;
 using Xunit.Abstractions;
+using bsp_client;
 
 namespace test;
 
@@ -32,7 +33,8 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
     public async Task RequestWorkspaceBuildTargets_AfterInitialize_Success()
     {
         // Arrange
-        _ = await _client.BuildInitializeAsync(TestProjectPath.AspnetWithoutErrors, _cancellationToken);
+        var initParams = TestData.GetInitParams(TestProjectPath.AspnetWithoutErrors);
+        _ = await _client.BuildInitializeAsync(initParams, _cancellationToken);
         await _client.BuildInitializedAsync();
 
         // Act
@@ -68,7 +70,8 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
     public async Task RequestBuildTargetCompile_ForProjectWithErrors_Success(string testProjectName, string expectedDiagnosticCode, string expectedDiagnosticMessage, int expectedDiagnosticsCount)
     {
         // Arrange
-        _ = await _client.BuildInitializeAsync(TestProjectPath.GetFullPathFor(testProjectName), _cancellationToken);
+        var initParams = TestData.GetInitParams(TestProjectPath.GetFullPathFor(testProjectName));
+        _ = await _client.BuildInitializeAsync(initParams, _cancellationToken);
         await _client.BuildInitializedAsync();
 
         var buildTargets = await _client.WorkspaceBuildTargetsAsync(_cancellationToken);

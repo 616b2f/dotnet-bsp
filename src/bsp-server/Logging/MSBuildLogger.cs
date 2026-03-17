@@ -1,7 +1,6 @@
 using BaseProtocol;
 using bsp4csharp.Protocol;
 using Microsoft.Build.Framework;
-using Newtonsoft.Json;
 using Methods = bsp4csharp.Protocol.Methods;
 
 namespace dotnet_bsp.Logging;
@@ -24,7 +23,7 @@ internal class MSBuildLogger(IBaseProtocolClientManager baseProtocolClientManage
 
     public LoggerVerbosity Verbosity { get; set; } = LoggerVerbosity.Normal;
 
-    public string Parameters { get; set; } = string.Empty;
+    public string? Parameters { get; set; } = string.Empty;
 
     public void Initialize(IEventSource eventSource)
     {
@@ -41,10 +40,7 @@ internal class MSBuildLogger(IBaseProtocolClientManager baseProtocolClientManage
 
     private void TargetStarted(object sender, TargetStartedEventArgs e)
     {
-        if (_buildStartTimestamp == null)
-        {
-            _buildStartTimestamp = _timeProvider.GetUtcNow();
-        }
+        _buildStartTimestamp = _timeProvider.GetUtcNow();
 
         if (_targetsOfInterest.Contains(e.TargetName, StringComparer.InvariantCultureIgnoreCase))
         {

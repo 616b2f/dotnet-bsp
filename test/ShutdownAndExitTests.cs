@@ -1,4 +1,5 @@
 using Xunit.Abstractions;
+using bsp_client;
 
 namespace test;
 
@@ -18,7 +19,8 @@ public partial class ShutdownAndExitTets(ITestOutputHelper outputHelper)
         cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(3));
         var cancellationToken = cancellationTokenSource.Token;
 
-        _ = await client.BuildInitializeAsync(TestProjectPath.AspnetWithoutErrors, cancellationToken);
+        var initParams = TestData.GetInitParams(TestProjectPath.AspnetWithoutErrors);
+        _ = await client.BuildInitializeAsync(initParams, cancellationToken);
         await client.BuildInitializedAsync();
 
         await client.ShutdownAsync();
@@ -44,7 +46,8 @@ public partial class ShutdownAndExitTets(ITestOutputHelper outputHelper)
         cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(3));
         var cancellationToken = cancellationTokenSource.Token;
 
-        _ = await client.BuildInitializeAsync(TestProjectPath.AspnetWithoutErrors, cancellationToken);
+        var initParams = TestData.GetInitParams(TestProjectPath.AspnetWithoutErrors);
+        _ = await client.BuildInitializeAsync(initParams, cancellationToken);
         await client.BuildInitializedAsync();
 
         // Act
