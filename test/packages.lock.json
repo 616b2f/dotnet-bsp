@@ -299,7 +299,7 @@
           "Microsoft.TestPlatform": "[18.0.1, )",
           "Microsoft.TestPlatform.ObjectModel": "[18.0.1, )",
           "Microsoft.TestPlatform.TranslationLayer": "[18.0.1, )",
-          "System.CommandLine": "[2.0.0-beta4.25168.1, )",
+          "System.CommandLine": "[2.0.5, )",
           "System.ComponentModel.Composition": "[10.0.5, )",
           "bsp4csharp": "[1.0.0, )"
         }
@@ -404,9 +404,9 @@
       },
       "System.CommandLine": {
         "type": "CentralTransitive",
-        "requested": "[2.0.0-beta4.25168.1, )",
-        "resolved": "2.0.0-beta4.25168.1",
-        "contentHash": "3h9SNmiMrVUa6e7XqHBpqriGreqp4jrpiGoiy0Y8nPpoIOnueH6x8RkOAjBAKT3tJfXprXOb698wlXRTLN11UA=="
+        "requested": "[2.0.5, )",
+        "resolved": "2.0.5",
+        "contentHash": "2XtWAPk1G6arpe3OCFNrYYuf6iIboznxs2elJSGgd8e0euou7LfGYFon6hBEfDWNtOLr0M3+oUVgy1a5EGa41A=="
       },
       "System.ComponentModel.Composition": {
         "type": "CentralTransitive",
