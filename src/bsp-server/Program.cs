@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging.Console;
 // WindowsErrorReporting.SetErrorModeOnWindows();
 
 var parser = CreateCommandLineParser();
-return await parser.Parse(args).InvokeAsync(CancellationToken.None);
+return await parser.Parse(args).InvokeAsync();
 
 static async Task<int> RunAsync(ServerConfiguration serverConfiguration, CancellationToken cancellationToken)
 {
@@ -85,39 +85,41 @@ static async Task<int> RunAsync(ServerConfiguration serverConfiguration, Cancell
     }
 }
 
-static CliRootCommand CreateCommandLineParser()
+static RootCommand CreateCommandLineParser()
 {
-    var debugOption = new CliOption<bool>("--debug")
+    var debugOption = new Option<bool>("--debug")
     {
         Description = "Flag indicating if the debugger should be launched on startup.",
         Required = false,
         DefaultValueFactory = _ => false,
     };
-    var brokeredServicePipeNameOption = new CliOption<string?>("--brokeredServicePipeName")
+
+    var brokeredServicePipeNameOption = new Option<string?>("--brokeredServicePipeName")
     {
         Description = "The name of the pipe used to connect to a remote process (if one exists).",
         Required = false,
     };
 
-    var logLevelOption = new CliOption<LogLevel>("--logLevel")
+    var logLevelOption = new Option<LogLevel>("--logLevel")
     {
         Description = "The minimum log verbosity.",
         Required = true,
     };
 
-    var extensionLogDirectoryOption = new CliOption<string>("--extensionLogDirectory")
+    var extensionLogDirectoryOption = new Option<string>("--extensionLogDirectory")
     {
         Description = "The directory where we should write log files to",
         Required = true,
     };
 
-    var rootCommand = new CliRootCommand()
+    var rootCommand = new RootCommand
     {
         debugOption,
         brokeredServicePipeNameOption,
         logLevelOption,
         extensionLogDirectoryOption
     };
+
     rootCommand.SetAction((parseResult, cancellationToken) =>
     {
         var launchDebugger = parseResult.GetValue(debugOption);
