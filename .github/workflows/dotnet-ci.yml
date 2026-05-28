@@ -19,7 +19,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
-      Solution_Name: dotnet-bsp.sln
+      Solution_Name: dotnet-bsp.slnx
       Test_Project_Path: test/bsp-server.tests.csproj
 
     steps:
@@ -34,12 +34,13 @@ jobs:
         dotnet-version: |
           8.0.x
           9.0.x
+          10.0.x
 
     - name: Restore the application
       run: dotnet restore --locked-mode ${{ env.Solution_Name }}
-        
+
     - name: Build
       run: dotnet build --no-restore ${{ env.Solution_Name }}
-        
+
     - name: Execute unit tests
       run: dotnet test --no-build ${{ env.Solution_Name }}
