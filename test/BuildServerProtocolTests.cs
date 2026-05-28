@@ -63,7 +63,7 @@ public partial class BuildServerProtocolTests : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData(TestProject.AspnetWithBuildErrors, "CS1002", "Syntax error, '=' expected", 1)]
+    [InlineData(TestProject.AspnetWithBuildErrors, "CS1003", "Syntax error, '=' expected", 1)]
     [InlineData(TestProject.AspnetWithRestoreErrors, "NU1102", "(>= 998.0.5)", 2)]
     public async Task RequestBuildTargetCompile_ForProjectWithErrors_Success(string testProjectName, string expectedDiagnosticCode, string expectedDiagnosticMessage, int expectedDiagnosticsCount)
     {
