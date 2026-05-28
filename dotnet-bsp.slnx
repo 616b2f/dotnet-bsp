@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/bp/bp.csproj" />
+    <Project Path="src/bsp-server/dotnet-bsp.csproj" />
+    <Project Path="src/bsp4csharp/bsp4csharp.csproj" />
+  </Folder>
+  <Project Path="test/bsp-server.tests.csproj" />
+</Solution>
