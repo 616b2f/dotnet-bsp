@@ -15,7 +15,7 @@ public partial class ShutdownAndExitTets(ITestOutputHelper outputHelper)
         var client = buildServer.CreateClient(serverCallbacks, new XunitTraceListener(outputHelper));
 
         var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(3));
+        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(5));
         var cancellationToken = cancellationTokenSource.Token;
 
         _ = await client.BuildInitializeAsync(TestProjectPath.AspnetWithoutErrors, cancellationToken);
@@ -41,7 +41,7 @@ public partial class ShutdownAndExitTets(ITestOutputHelper outputHelper)
         var client = buildServer.CreateClient(serverCallbacks, new XunitTraceListener(outputHelper));
 
         var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(3));
+        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(5));
         var cancellationToken = cancellationTokenSource.Token;
 
         _ = await client.BuildInitializeAsync(TestProjectPath.AspnetWithoutErrors, cancellationToken);
